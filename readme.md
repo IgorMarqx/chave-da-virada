@@ -91,17 +91,6 @@ Todas as tabelas possuem:
 
 ---
 
-## Laravel-Friendly (Decisões Técnicas)
-- Nomes de tabelas no plural
-- Padrão id, user_id, topico_id
-- SoftDeletes onde necessário
-- JSON castado no Model
-- Jobs para IA e extrações
-- Policies para controle de acesso
-- Storage local ou S3 compatível
-
----
-
 ## Escalabilidade
 - IA desacoplada via Jobs
 - Possibilidade de microserviço futuro
