@@ -1,6 +1,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInitials } from '@/hooks/use-initials';
 import { type User } from '@/types';
+import { router } from '@inertiajs/react';
+import { useEffect } from 'react';
 
 export function UserInfo({
     user,
@@ -10,6 +12,14 @@ export function UserInfo({
     showEmail?: boolean;
 }) {
     const getInitials = useInitials();
+
+    useEffect(() => {
+        if (!user) {
+            router.visit('/login');
+        }
+    }, [user]);
+
+    if (!user) return null;
 
     return (
         <>
