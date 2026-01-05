@@ -28,8 +28,10 @@ mv readme.md readme.md.backup
 # Instalar Laravel via Composer
 composer create-project laravel/laravel temp-laravel
 
-# Mover arquivos do Laravel para o diretório atual
-mv temp-laravel/* temp-laravel/.* . 2>/dev/null || true
+# Mover arquivos do Laravel para o diretório atual (incluindo arquivos ocultos)
+shopt -s dotglob
+mv temp-laravel/* . 2>/dev/null || true
+shopt -u dotglob
 rmdir temp-laravel
 
 # Restaurar o readme
