@@ -18,14 +18,31 @@ cd chave-da-virada
 ```
 
 ### Passo 2: Criar o Projeto Laravel
-Como este repositório contém apenas o escopo técnico, você precisa inicializar um projeto Laravel:
+Como este repositório contém apenas o escopo técnico, você precisa inicializar um projeto Laravel.
 
+**Opção A: Inicializar Laravel no diretório atual**
 ```bash
-# Instalar Laravel via Composer
-composer create-project laravel/laravel .
+# Mover o readme temporariamente
+mv readme.md readme.md.backup
 
-# Ou se preferir uma versão específica:
-composer create-project laravel/laravel . "10.*"
+# Instalar Laravel via Composer
+composer create-project laravel/laravel temp-laravel
+
+# Mover arquivos do Laravel para o diretório atual
+mv temp-laravel/* temp-laravel/.* . 2>/dev/null || true
+rmdir temp-laravel
+
+# Restaurar o readme
+rm readme.md
+mv readme.md.backup readme.md
+```
+
+**Opção B: Criar um novo diretório para o projeto**
+```bash
+cd ..
+composer create-project laravel/laravel chave-da-virada-app "10.*"
+cd chave-da-virada-app
+# Copie o readme.md do repositório clonado para referência
 ```
 
 ### Passo 3: Configurar Variáveis de Ambiente
@@ -45,8 +62,8 @@ DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_DATABASE=chave_da_virada
-DB_USERNAME=seu_usuario
-DB_PASSWORD=sua_senha
+DB_USERNAME=seu_usuario_aqui
+DB_PASSWORD=sua_senha_aqui
 
 # Configuração do Gemini AI (Google)
 GEMINI_API_KEY=sua_chave_api_gemini
@@ -173,7 +190,15 @@ Após a instalação, você deverá implementar:
 **Erro de permissão no storage:**
 ```bash
 chmod -R 775 storage bootstrap/cache
+
+# Para Ubuntu/Debian:
 chown -R www-data:www-data storage bootstrap/cache
+
+# Para CentOS/RHEL:
+# chown -R apache:apache storage bootstrap/cache
+
+# Para macOS (desenvolvimento local):
+# chown -R $(whoami):staff storage bootstrap/cache
 ```
 
 **Erro de conexão com banco de dados:**
