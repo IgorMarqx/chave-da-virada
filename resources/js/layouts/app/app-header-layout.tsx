@@ -1,7 +1,8 @@
 import { AppContent } from '@/components/app-content';
 import { AppHeader } from '@/components/app-header';
 import { AppShell } from '@/components/app-shell';
-import { type BreadcrumbItem } from '@/types';
+import { SharedData, type BreadcrumbItem } from '@/types';
+import { usePage } from '@inertiajs/react';
 import type { PropsWithChildren } from 'react';
 
 export default function AppHeaderLayout({
