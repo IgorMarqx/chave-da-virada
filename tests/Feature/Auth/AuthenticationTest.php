@@ -2,12 +2,38 @@
 
 use App\Models\User;
 use Illuminate\Support\Facades\RateLimiter;
+use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Fortify\Features;
 
 test('login screen can be rendered', function () {
     $response = $this->get(route('login'));
 
-    $response->assertStatus(200);
+    $response->assertOk();
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('auth/login')
+    );
+});
+
+test('login screen status is null when no session value is set', function () {
+    $response = $this->get(route('login'));
+
+    $response->assertOk();
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('auth/login')
+        ->where('status', null)
+    );
+});
+
+test('login screen receives status message from the session', function () {
+    $response = $this->withSession([
+        'status' => 'Password reset link sent.',
+    ])->get(route('login'));
+
+    $response->assertOk();
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('auth/login')
+        ->where('status', 'Password reset link sent.')
+    );
 });
 
 test('users can authenticate using the login screen', function () {
