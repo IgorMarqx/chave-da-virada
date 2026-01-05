@@ -6,7 +6,10 @@ import axios, {
 } from 'axios';
 
 const TOKEN_STORAGE_KEY = 'auth_token';
+const USER_STORAGE_KEY = 'auth_user';
+const EXPIRES_AT_STORAGE_KEY = 'auth_expires_at';
 let inMemoryToken: string | null = null;
+let inMemoryExpiresAt: number | null = null;
 
 const readToken = (): string | null => {
     if (typeof window === 'undefined') {
@@ -32,6 +35,79 @@ export const setAuthToken = (token: string | null): void => {
 
 export const clearAuthToken = (): void => setAuthToken(null);
 export const getAuthToken = (): string | null => readToken();
+
+export const setAuthUser = (user: unknown | null): void => {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    if (user == null) {
+        window.localStorage.removeItem(USER_STORAGE_KEY);
+        return;
+    }
+
+    window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+};
+
+export const getAuthUser = (): unknown | null => {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
+    const raw = window.localStorage.getItem(USER_STORAGE_KEY);
+    if (!raw) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(raw) as unknown;
+    } catch {
+        return null;
+    }
+};
+
+const readExpiresAt = (): number | null => {
+    if (typeof window === 'undefined') {
+        return inMemoryExpiresAt;
+    }
+
+    const value = window.localStorage.getItem(EXPIRES_AT_STORAGE_KEY);
+    if (!value) {
+        return inMemoryExpiresAt;
+    }
+
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : inMemoryExpiresAt;
+};
+
+export const setAuthExpiresIn = (expiresInSeconds: number | null): void => {
+    if (expiresInSeconds == null) {
+        inMemoryExpiresAt = null;
+        if (typeof window !== 'undefined') {
+            window.localStorage.removeItem(EXPIRES_AT_STORAGE_KEY);
+        }
+        return;
+    }
+
+    const expiresAt = Date.now() + expiresInSeconds * 1000;
+    inMemoryExpiresAt = expiresAt;
+    if (typeof window !== 'undefined') {
+        window.localStorage.setItem(EXPIRES_AT_STORAGE_KEY, String(expiresAt));
+    }
+};
+
+export const getAuthExpiresAt = (): number | null => readExpiresAt();
+
+export const isAuthExpired = (): boolean => {
+    const expiresAt = readExpiresAt();
+    return typeof expiresAt === 'number' && Date.now() >= expiresAt;
+};
+
+export const clearAuthSession = (): void => {
+    clearAuthToken();
+    setAuthUser(null);
+    setAuthExpiresIn(null);
+};
 
 const attachToken = (
     config: InternalAxiosRequestConfig,
