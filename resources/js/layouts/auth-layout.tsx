@@ -9,6 +9,8 @@ export default function AuthLayout({
     children: React.ReactNode;
     title: string;
     description: string;
+    showHeader?: boolean;
+    containerClassName?: string;
 }) {
     return (
         <AuthLayoutTemplate title={title} description={description} {...props}>
