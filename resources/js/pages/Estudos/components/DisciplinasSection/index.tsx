@@ -3,23 +3,21 @@ import type { Disciplina } from '../../types';
 
 export default function DisciplinasSection({ disciplinas }: { disciplinas: Disciplina[] }) {
     const hasDisciplinas = disciplinas.length > 0;
+    const latestDisciplinas = disciplinas.slice(0, 3);
 
     return (
         <div className="min-w-0 rounded-3xl border border-white/80 bg-white/80 p-6 shadow-sm">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-semibold text-slate-900">Disciplinas</h2>
-                    <p className="mt-1 text-sm text-slate-500">{disciplinas.length} disciplinas cadastradas</p>
+                    <h2 className="text-2xl font-semibold text-slate-900">Ultimas disciplinas acessadas</h2>
+                    <p className="mt-1 text-sm text-slate-500">Mostrando as 3 ultimas acessadas</p>
                 </div>
-                <button className="rounded-full bg-red-500 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-600">
-                    Nova disciplina
-                </button>
             </div>
             <div className="mt-6 flex flex-wrap items-stretch gap-4">
                 {!hasDisciplinas ? (
                     <EmptyState title="Cadastre uma disciplina para continuar" action="Cadastrar disciplina" />
                 ) : (
-                    disciplinas.map((disciplina) => (
+                    latestDisciplinas.map((disciplina) => (
                         <button
                             key={disciplina.id}
                             className="group flex min-h-[104px] flex-1 flex-wrap items-center gap-4 rounded-xl border border-slate-200 bg-white px-5 py-4 text-left shadow-sm transition duration-300 hover:border-red-300 hover:shadow-md"
