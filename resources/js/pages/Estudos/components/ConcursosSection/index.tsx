@@ -6,6 +6,8 @@ import CreateConcurso from './CreateConcurso';
 import { useGetConcurso } from '@/hooks/Concursos/useGetConcurso';
 import ProgressRing from './ProgressRing';
 import { Button } from '@headlessui/react';
+import { Link } from '@inertiajs/react';
+import { formatDate } from '@/lib/utils';
 
 export default function ConcursosSection() {
     const { concursos, isLoading, error, fetchConcursos } = useGetConcurso();
@@ -15,19 +17,6 @@ export default function ConcursosSection() {
     useEffect(() => {
         fetchConcursos();
     }, []);
-
-    const formatDate = (value?: string | null) => {
-        if (!value) {
-            return 'Nao informada';
-        }
-
-        const parsed = new Date(value);
-        if (Number.isNaN(parsed.getTime())) {
-            return value;
-        }
-
-        return parsed.toLocaleDateString('pt-BR');
-    };
 
     return (
         <>
@@ -41,7 +30,7 @@ export default function ConcursosSection() {
                     </div>
 
                     {hasConcursos && (
-                        <Button className="rounded-full bg-red-500 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-600 cursor-pointer">
+                        <Button onClick={() => setIsCreateOpen(true)} className="rounded-full bg-red-500 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-600 cursor-pointer">
                             Novo concurso
                         </Button>
                     )}
@@ -91,28 +80,35 @@ export default function ConcursosSection() {
                                 </div>
 
                                 <div className="mt-6 space-y-2 border-t border-slate-100 pt-4 text-xs text-slate-500">
-                                    <div className="flex items-center gap-1.5">
-                                        <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10m-12 9h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z" />
-                                        </svg>
-                                        <span className="font-medium text-slate-600">Data da prova:</span>
-                                        {formatDate(concurso.data_prova)}
-                                    </div>
-                                    <div className="flex items-start gap-1.5">
-                                        <svg viewBox="0 0 24 24" className="mt-0.5 size-3.5" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h10M7 16h6M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
-                                        </svg>
-                                        <span className="font-medium text-slate-600">Descricao:</span>
-                                        <span className="line-clamp-2">
-                                            {concurso.descricao ? concurso.descricao : 'Nao informada'}
-                                        </span>
-                                    </div>
+                                    {concurso.data_prova && (
+                                        <div className="flex items-center gap-1.5">
+                                            <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10m-12 9h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z" />
+                                            </svg>
+                                            <span className="font-medium text-slate-600">Data da prova:</span>
+                                            {formatDate(concurso.data_prova)}
+                                        </div>
+                                    )}
+                                    {concurso.descricao && (
+                                        <div className="flex items-start gap-1.5">
+                                            <svg viewBox="0 0 24 24" className="mt-0.5 size-3.5" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h10M7 16h6M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
+                                            </svg>
+                                            <span className="font-medium text-slate-600">Descricao:</span>
+                                            <span className="line-clamp-2">
+                                                {concurso.descricao}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
 
-                                <div className='mt-3 flex flex-col'>
-                                    <Button className="rounded bg-red-500 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-600 cursor-pointer">
+                                <div className="mt-3 flex flex-col">
+                                    <Link
+                                        href={`/estudos/concursos/${concurso.id}`}
+                                        className="rounded bg-red-500 px-5 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-red-600"
+                                    >
                                         Entrar
-                                    </Button>
+                                    </Link>
                                 </div>
                             </div>
                         ))
