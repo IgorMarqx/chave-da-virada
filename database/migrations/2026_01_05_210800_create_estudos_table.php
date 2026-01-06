@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained();
             $table->foreignId('topico_id')->constrained('topicos');
-            $table->integer('tempo_minutos')->default(0);
+            $table->float('tempo_minutos')->default(0);
             $table->timestamp('data_estudo');
             $table->string('origem', 30)->nullable();
             $table->text('observacao')->nullable();
