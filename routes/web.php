@@ -12,5 +12,6 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('dashboard', [WebController::class, 'dashboard'])->name('dashboard');
+Route::get('estudos', [WebController::class, 'estudos'])->name('estudos');
 
 require __DIR__ . '/settings.php';
