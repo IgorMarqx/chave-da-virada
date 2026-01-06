@@ -7,18 +7,28 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useCreateConcurso } from '@/hooks/Concursos/useCreateConcurso';
+import { CreateConcursoData } from '@/types/Concursos';
 import { useForm } from '@inertiajs/react';
+import InputError from '@/components/input-error';
+import { Spinner } from '@/components/ui/spinner';
 
 type CreateConcursoProps = {
-    onClose: () => void;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    onSuccess: () => void;
 };
 
-export default function CreateConcurso({ onClose }: CreateConcursoProps) {
-    const { data, setData, reset } = useForm({
+export default function CreateConcurso({
+    open,
+    onOpenChange,
+    onSuccess
+}: CreateConcursoProps) {
+    const { isLoading, error, handleCreateConcurso } = useCreateConcurso();
+    const { data, setData, reset } = useForm<CreateConcursoData>({
         nome: '',
         orgao: '',
         data_prova: '',
@@ -26,12 +36,7 @@ export default function CreateConcurso({ onClose }: CreateConcursoProps) {
     });
 
     return (
-        <Dialog>
-            <DialogTrigger asChild>
-                <Button className="rounded-full bg-red-500 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-600">
-                    Novo concurso
-                </Button>
-            </DialogTrigger>
+        <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
                     <DialogTitle>Novo concurso</DialogTitle>
@@ -39,11 +44,21 @@ export default function CreateConcurso({ onClose }: CreateConcursoProps) {
                         Preencha os dados basicos para cadastrar um concurso.
                     </DialogDescription>
                 </DialogHeader>
+
+                <InputError message={error ?? undefined} />
+
                 <form
                     className="grid gap-4"
                     onSubmit={(event) => {
                         event.preventDefault();
-                        onClose();
+
+                        handleCreateConcurso(data).then(() => {
+                            if (!error) {
+                                reset();
+                                onOpenChange(false);
+                                onSuccess()
+                            }
+                        });
                     }}
                 >
                     <div className="grid gap-2">
@@ -100,14 +115,16 @@ export default function CreateConcurso({ onClose }: CreateConcursoProps) {
                     </div>
                     <DialogFooter className="gap-2 pt-2">
                         <DialogClose asChild>
-                            <Button variant="secondary" type="button" className=' cursor-pointer'>
+                            <Button variant="secondary" type="button" className="cursor-pointer">
                                 Cancelar
                             </Button>
                         </DialogClose>
                         <Button
+                            disabled={isLoading}
                             type="submit"
                             className="bg-red-500 text-white hover:bg-red-600 cursor-pointer"
                         >
+                            {isLoading && (<Spinner className="mr-2" />)}
                             Salvar concurso
                         </Button>
                     </DialogFooter>
