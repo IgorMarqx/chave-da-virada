@@ -2,13 +2,13 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 
-import ConcursosSection from './components/ConcursosSection';
-import { concursos, disciplinas, statusConfig, topicos } from './components/data';
+import { concursos, disciplinas, statusConfig, topicos } from './data';
 import DisciplinasSection from './components/DisciplinasSection';
 import EstudoRevisaoCard from './components/EstudoRevisaoCard';
 import HeaderSection from './components/HeaderSection';
 import HistoricoIaCard from './components/HistoricoIaCard';
 import TopicosSection from './components/TopicosSection';
+import ConcursosSection from './components/ConcursosSection';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
