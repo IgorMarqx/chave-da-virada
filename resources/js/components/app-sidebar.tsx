@@ -28,7 +28,7 @@ const mainNavItems: NavItem[] = [
 const estudosNavItems: NavItem[] = [
     {
         title: 'Estudos',
-        href: '#',
+        href: '/estudos',
         icon: NotebookPen,
     },
 ];
