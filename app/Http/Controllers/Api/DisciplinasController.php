@@ -1,0 +1,33 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Services\DisciplinasService;
+use Illuminate\Http\Request;
+
+class DisciplinasController extends ApiController
+{
+    public function __construct(
+        private readonly DisciplinasService $disciplinasService
+    ) {}
+
+    public function create(Request $request)
+    {
+        $data = $request->validate([
+            'concurso_id' => 'required|exists:concursos,id',
+            'nome' => 'required|string|max:255',
+        ]);
+
+        $disciplina = $this->disciplinasService->create($data);
+
+        return $this->apiSuccess($disciplina, 'Disciplina created successfully', 201);
+    }
+
+    public function listByConcurso(int $concursoId)
+    {
+        $user = request()->user();
+        $disciplinas = $this->disciplinasService->listByConcursoForUser($concursoId, $user->id);
+
+        return $this->apiSuccess($disciplinas, 'Disciplinas fetched successfully');
+    }
+}
