@@ -13,5 +13,8 @@ Route::get('/', function () {
 
 Route::get('dashboard', [WebController::class, 'dashboard'])->name('dashboard');
 Route::get('estudos', [WebController::class, 'estudos'])->name('estudos');
+Route::get('estudos/concursos/{concurso}', [WebController::class, 'concursoDisciplinas'])->name('estudos.concursos');
+Route::get('estudos/disciplinas/{disciplina}', [WebController::class, 'disciplinaTopicos'])->name('estudos.disciplinas');
+Route::get('estudos/topicos/{topico}', [WebController::class, 'topicoDetalhe'])->name('estudos.topicos');
 
 require __DIR__ . '/settings.php';
