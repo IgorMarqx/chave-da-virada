@@ -11,4 +11,9 @@ class WebController extends Controller
     {
         return Inertia::render('dashboard');
     }
+
+    public function estudos()
+    {
+        return Inertia::render('Estudos/index');
+    }
 }
