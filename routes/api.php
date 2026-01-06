@@ -21,4 +21,7 @@ Route::middleware([
     });
 
     Route::prefix('concursos')->group(base_path('routes/concursos.php'));
+    Route::prefix('disciplinas')->group(base_path('routes/disciplinas.php'));
+    Route::prefix('topicos')->group(base_path('routes/topicos.php'));
+    Route::prefix('estudos')->group(base_path('routes/estudos.php'));
 });
