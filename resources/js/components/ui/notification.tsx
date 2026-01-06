@@ -142,6 +142,8 @@ type ToastData = {
   icon?: React.ReactNode;
 };
 
+const DEFAULT_TOAST_DURATION = 2000;
+
 const toastListeners: Array<(toasts: ToastData[]) => void> = [];
 let toastQueue: ToastData[] = [];
 
@@ -238,6 +240,48 @@ export function getToastIcon(variant?: ToastProps['variant']) {
   }
 }
 
+function getProgressClass(variant?: ToastProps['variant']) {
+  switch (variant) {
+    case 'success':
+      return 'bg-green-500';
+    case 'warning':
+      return 'bg-amber-500';
+    case 'info':
+      return 'bg-blue-500';
+    case 'danger':
+    case 'destructive':
+      return 'bg-red-500';
+    default:
+      return 'bg-gray-400';
+  }
+}
+
+function ToastProgress({
+  duration,
+  variant,
+}: {
+  duration: number;
+  variant?: ToastProps['variant'];
+}) {
+  const [width, setWidth] = React.useState(100);
+
+  React.useEffect(() => {
+    setWidth(100);
+    const startId = window.setTimeout(() => setWidth(0), 10);
+    return () => window.clearTimeout(startId);
+  }, [duration]);
+
+  return (
+    <span
+      className={cn(
+        'absolute bottom-0 left-0 h-1 w-full transition-[width] ease-linear',
+        getProgressClass(variant),
+      )}
+      style={{ width: `${width}%`, transitionDuration: `${duration}ms` }}
+    />
+  );
+}
+
 function Toaster() {
   const { toasts, removeToast } = useToasts();
 
@@ -247,7 +291,7 @@ function Toaster() {
         <Toast
           key={toast.id}
           variant={toast.variant}
-          duration={toast.duration}
+          duration={toast.duration ?? DEFAULT_TOAST_DURATION}
           onOpenChange={(isOpen) => {
             if (!isOpen) {
               removeToast(toast.id);
@@ -264,6 +308,10 @@ function Toaster() {
             ) : null}
           </div>
           <ToastClose />
+          <ToastProgress
+            duration={toast.duration ?? DEFAULT_TOAST_DURATION}
+            variant={toast.variant}
+          />
         </Toast>
       ))}
       <ToastViewport />
