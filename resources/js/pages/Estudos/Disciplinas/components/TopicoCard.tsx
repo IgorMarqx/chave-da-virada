@@ -19,6 +19,9 @@ type TopicoCardProps = {
     onDragLeave: () => void;
     onDrop: (event: React.DragEvent, id: number) => void;
     onDragEnd: () => void;
+    onTouchStart: (event: React.TouchEvent, id: number) => void;
+    onTouchMove: (event: React.TouchEvent) => void;
+    onTouchEnd: () => void;
     onEdit: (topico: Topico) => void;
     onDelete: (topico: Topico) => void;
 };
@@ -35,6 +38,9 @@ export default function TopicoCard({
     onDragLeave,
     onDrop,
     onDragEnd,
+    onTouchStart,
+    onTouchMove,
+    onTouchEnd,
     onEdit,
     onDelete,
 }: TopicoCardProps) {
@@ -43,6 +49,7 @@ export default function TopicoCard({
             onDragOver={(event) => onDragOver(event, topico.id)}
             onDragLeave={onDragLeave}
             onDrop={(event) => onDrop(event, topico.id)}
+            data-topico-id={topico.id}
             className={cn(
                 'group relative py-0 transition-all duration-200',
                 draggedId === topico.id && 'scale-[1.02] opacity-50 shadow-lg',
@@ -56,8 +63,11 @@ export default function TopicoCard({
                         draggable={!isSaving}
                         onDragStart={(event) => onDragStart(event, topico.id)}
                         onDragEnd={onDragEnd}
+                        onTouchStart={(event) => onTouchStart(event, topico.id)}
+                        onTouchMove={onTouchMove}
+                        onTouchEnd={onTouchEnd}
                         className={cn(
-                            'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400 transition-colors',
+                            'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400 transition-colors touch-none',
                             'hover:bg-slate-200 hover:text-slate-600',
                             'active:cursor-grabbing active:bg-slate-300',
                             isSaving ? 'cursor-not-allowed opacity-60' : 'cursor-grab'
