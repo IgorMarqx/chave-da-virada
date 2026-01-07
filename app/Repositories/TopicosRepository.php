@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Topico;
+use Illuminate\Database\Eloquent\Collection;
 
 class TopicosRepository
 {
@@ -20,7 +21,7 @@ class TopicosRepository
         return is_null($lastOrdem) ? 1 : $lastOrdem + 1;
     }
 
-    public function listByDisciplinaForUser(int $disciplinaId, int $userId)
+    public function listByDisciplinaForUser(int $disciplinaId, int $userId): Collection
     {
         return Topico::query()
             ->select('topicos.id', 'topicos.disciplina_id', 'topicos.nome', 'topicos.descricao', 'topicos.ordem')
@@ -37,7 +38,7 @@ class TopicosRepository
             ->get();
     }
 
-    public function findWithProgressForUser(int $topicoId, int $userId)
+    public function findWithProgressForUser(int $topicoId, int $userId): ?Topico
     {
         return Topico::query()
             ->select('topicos.id', 'topicos.disciplina_id', 'topicos.nome', 'topicos.descricao', 'topicos.ordem')
@@ -57,5 +58,34 @@ class TopicosRepository
                 END as status
             ")
             ->first();
+    }
+
+    public function update(Topico $topico, array $data): Topico
+    {
+        $topico->fill($data);
+        $topico->save();
+
+        return $topico->refresh();
+    }
+
+    public function delete(Topico $topico): void
+    {
+        $topico->delete();
+    }
+
+    /**
+     * @param  array<int, int>  $topicoIds
+     */
+    public function reorderForUser(int $disciplinaId, int $userId, array $topicoIds): void
+    {
+        Topico::query()->getConnection()->transaction(function () use ($disciplinaId, $userId, $topicoIds) {
+            foreach ($topicoIds as $index => $topicoId) {
+                Topico::query()
+                    ->where('id', $topicoId)
+                    ->where('disciplina_id', $disciplinaId)
+                    ->where('user_id', $userId)
+                    ->update(['ordem' => $index + 1]);
+            }
+        });
     }
 }
