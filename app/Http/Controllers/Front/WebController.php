@@ -47,4 +47,18 @@ class WebController extends Controller
             ],
         ]);
     }
+
+    public function topicoRevisao(Topico $topico)
+    {
+        $topico->load('disciplina:id,concurso_id');
+
+        return Inertia::render('Estudos/Topicos/review', [
+            'topico' => [
+                'id' => $topico->id,
+                'nome' => $topico->nome,
+                'disciplina_id' => $topico->disciplina_id,
+                'concurso_id' => $topico->disciplina->concurso_id ?? null,
+            ],
+        ]);
+    }
 }
