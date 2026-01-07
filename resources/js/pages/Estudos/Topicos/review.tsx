@@ -5,25 +5,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
-import {
-    ArrowLeft,
-    BookOpen,
-    Eye,
-    Expand,
-    FileText,
-    NotebookPen,
-    Upload,
-} from 'lucide-react';
+import { ArrowLeft, BookOpen, Expand, FileText, NotebookPen, Upload } from 'lucide-react';
 import { useGetTopico } from '@/hooks/Topicos/useGetTopico';
 import { useGetEstudosByTopico } from '@/hooks/Estudos/useGetEstudosByTopico';
 import { useGetAnotacaoByTopico } from '@/hooks/Anotacoes/useGetAnotacaoByTopico';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
+import { NotesModal } from '@/pages/Estudos/Topicos/reviewComponents/NotesModal';
+import { SessionSummaryCard } from '@/pages/Estudos/Topicos/reviewComponents/SessionSummaryCard';
+import NotesSummaryCard from './reviewComponents/NotesSummaryCard';
+import StudyFilesCard from './components/StudyFilesCard';
 
 type TopicoRef = {
     id: number;
@@ -44,9 +33,9 @@ export default function TopicoRevisao({ topico }: PageProps) {
     const [isNotesOpen, setIsNotesOpen] = useState(false);
 
     useEffect(() => {
-        fetchTopico(topico.id);
-        fetchEstudos(topico.id);
-        fetchAnotacao(topico.id);
+        fetchTopico(topico.id)
+            .then(() => fetchEstudos(topico.id)
+                .then(() => fetchAnotacao(topico.id)));
     }, [topico.id]);
 
     useEffect(() => {
@@ -64,15 +53,6 @@ export default function TopicoRevisao({ topico }: PageProps) {
         () => estudos.reduce((acc, estudo) => acc + estudo.tempo_segundos, 0),
         [estudos],
     );
-
-    const formatDuration = (totalSecondsValue: number) => {
-        const safeSeconds = Math.max(0, Math.floor(totalSecondsValue));
-        const hours = Math.floor(safeSeconds / 3600);
-        const minutes = Math.floor((safeSeconds % 3600) / 60);
-        const seconds = safeSeconds % 60;
-
-        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-    };
 
     const notesCount = notesHtml.trim().length > 0 ? 1 : 0;
 
@@ -128,100 +108,25 @@ export default function TopicoRevisao({ topico }: PageProps) {
                                         <p className="text-xs mt-1">Comece a estudar para criar anotacoes</p>
                                     </div>
                                 ) : (
-                                    <div className="space-y-3">
-                                        <div className="flex justify-end">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => setIsNotesOpen(true)}
-                                                className="bg-white/80"
-                                            >
-                                                <Expand className="mr-2 h-4 w-4" />
-                                                Expandir
-                                            </Button>
-                                        </div>
-                                        <div className="p-4 bg-emerald-50/50 rounded-lg border border-emerald-100 max-h-80 overflow-y-auto">
-                                            <div
-                                                className="ProseMirror max-w-none text-sm text-slate-700"
-                                                dangerouslySetInnerHTML={{ __html: notesHtml }}
-                                            />
-                                        </div>
-                                    </div>
+                                    <NotesSummaryCard notesHtml={notesHtml} setIsNotesOpen={setIsNotesOpen} />
                                 )}
                             </CardContent>
                         </Card>
 
-                        <Card className="border-2 border-sky-100 bg-white/80 backdrop-blur-sm">
-                            <CardHeader className="flex flex-row items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <FileText className="h-5 w-5 text-sky-600" />
-                                    <CardTitle className="text-lg">Arquivos Anexados</CardTitle>
-                                </div>
-                                <span className="text-sm text-slate-500">0 arquivos</span>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <Button
-                                    variant="outline"
-                                    className="w-full border-dashed border-2 border-sky-200 hover:border-sky-400 hover:bg-sky-50 transition-colors bg-transparent"
-                                    onClick={() => { }}
-                                >
-                                    <Upload className="mr-2 h-4 w-4" /> Anexar Arquivo
-                                </Button>
-
-                                <div className="flex flex-col items-center justify-center py-12 text-slate-500">
-                                    <FileText className="h-12 w-12 mb-3 opacity-30" />
-                                    <p className="text-sm font-medium">Nenhum arquivo anexado</p>
-                                    <p className="text-xs mt-1">Clique acima para adicionar arquivos</p>
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <StudyFilesCard topicoId={topico.id} />
                     </div>
 
-                    <Card className="mt-6 border-2 border-amber-100 bg-white/80 backdrop-blur-sm">
-                        <CardHeader>
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <Eye className="h-5 w-5 text-amber-600" />
-                                Resumo da Sessao
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-3 gap-4 text-center">
-                                <div className="p-4 bg-amber-50/50 rounded-lg">
-                                    <p className="text-2xl font-bold text-amber-700">
-                                        {isLoadingEstudos ? '--:--:--' : formatDuration(totalSeconds)}
-                                    </p>
-                                    <p className="text-xs text-slate-500 mt-1">Tempo Total</p>
-                                </div>
-                                <div className="p-4 bg-emerald-50/50 rounded-lg">
-                                    <p className="text-2xl font-bold text-emerald-700">{notesCount}</p>
-                                    <p className="text-xs text-slate-500 mt-1">Anotacoes</p>
-                                </div>
-                                <div className="p-4 bg-sky-50/50 rounded-lg">
-                                    <p className="text-2xl font-bold text-sky-700">0</p>
-                                    <p className="text-xs text-slate-500 mt-1">Arquivos</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <SessionSummaryCard
+                        isLoadingEstudos={isLoadingEstudos}
+                        totalSeconds={totalSeconds}
+                        notesCount={notesCount}
+                    />
 
-                    <Dialog open={isNotesOpen} onOpenChange={setIsNotesOpen}>
-                        <DialogContent className="!w-[95vw] !max-w-[1600px] max-h-[90vh] overflow-hidden flex flex-col">
-                            <DialogHeader className="pb-4 border-b">
-                                <DialogTitle className="flex items-center gap-2 text-xl">
-                                    <NotebookPen className="h-5 w-5 text-emerald-600" />
-                                    Anotacoes do Topico
-                                </DialogTitle>
-                                <DialogDescription>
-                                    Visualizacao ampliada das suas anotacoes.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="flex-1 overflow-y-auto py-4">
-                                <div className="ProseMirror max-w-none rounded-lg border border-emerald-100 bg-emerald-50/50 p-4 text-sm text-slate-700">
-                                    <div dangerouslySetInnerHTML={{ __html: notesHtml }} />
-                                </div>
-                            </div>
-                        </DialogContent>
-                    </Dialog>
+                    <NotesModal
+                        isOpen={isNotesOpen}
+                        onOpenChange={setIsNotesOpen}
+                        notesHtml={notesHtml}
+                    />
                 </div>
             </div>
         </AppLayout>
