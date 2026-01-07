@@ -12,9 +12,9 @@ import {
 } from '@/components/ui/sidebar';
 import { clearAuthSession } from '@/lib/http';
 import { dashboard } from '@/routes';
-import { type NavItem } from '@/types';
-import { router, Link } from '@inertiajs/react';
-import { BookIcon, BookOpen, Folder, LayoutGrid, LogOut, NotebookPen } from 'lucide-react';
+import { SharedData, type NavItem } from '@/types';
+import { router, Link, usePage } from '@inertiajs/react';
+import { LayoutGrid, LogOut, NotebookPen, Users2 } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -33,7 +33,17 @@ const estudosNavItems: NavItem[] = [
     },
 ];
 
+const adminNavItems: NavItem[] = [
+    {
+        title: 'Usuários',
+        href: '/users',
+        icon: Users2,
+    },
+];
+
 export function AppSidebar() {
+    const { auth: { user } } = usePage<SharedData>().props;
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -51,6 +61,10 @@ export function AppSidebar() {
             <SidebarContent>
                 <NavMain title='Principal' items={mainNavItems} />
                 <NavMain title='Educacional' items={estudosNavItems} />
+
+                {user.role === 'admin' && (
+                    <NavMain title='Administração' items={adminNavItems} />
+                )}
             </SidebarContent>
 
             <SidebarFooter>
