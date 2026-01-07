@@ -3,7 +3,14 @@ export type CreateConcursoData = {
     orgao: string;
     data_prova?: string;
     descricao?: string;
-}
+};
+
+export type UpdateConcursoData = {
+    nome: string;
+    orgao: string;
+    data_prova?: string;
+    descricao?: string;
+};
 
 export type Concurso = {
     id: number;
@@ -12,6 +19,7 @@ export type Concurso = {
     data_prova?: string | null;
     descricao?: string | null;
     progresso: number;
+    disciplinas_count?: number;
     created_at?: string;
     updated_at?: string;
 };
