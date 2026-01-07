@@ -20,4 +20,9 @@ class DisciplinasService
     {
         return $this->disciplinasRepository->listByConcursoForUser($concursoId, $userId);
     }
+
+    public function listRecentForUser(int $userId, int $limit = 3)
+    {
+        return $this->disciplinasRepository->listRecentForUser($userId, $limit);
+    }
 }
