@@ -29,14 +29,14 @@ export default function StudyHistoryCard({ estudos, isLoading, error, notesHtml 
     };
 
     return (
-        <Card className="border-amber-100 bg-white/80 backdrop-blur-sm max-h-90" id="historico">
+        <Card className="border-amber-100 bg-white/80 backdrop-blur-sm max-h-95" id="historico">
             <CardHeader>
                 <CardTitle className="text-lg">Historico de Estudos</CardTitle>
                 <p className="text-sm text-sky-600">
                     {estudos.length} registro{estudos.length === 1 ? '' : 's'}
                 </p>
             </CardHeader>
-            <CardContent className="overflow-y-auto max-h-90 pr-2">
+            <CardContent className="overflow-y-auto max-h-95 pr-2">
                 <InputError message={error ?? undefined} />
                 {isLoading ? (
                     <div className="flex items-center justify-center py-8 text-slate-500">
