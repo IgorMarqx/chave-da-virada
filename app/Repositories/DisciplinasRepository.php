@@ -3,10 +3,11 @@
 namespace App\Repositories;
 
 use App\Models\Disciplina;
+use Illuminate\Database\Eloquent\Collection;
 
 class DisciplinasRepository
 {
-    public function listByConcursoForUser(int $concursoId, int $userId)
+    public function listByConcursoForUser(int $concursoId, int $userId): Collection
     {
         return Disciplina::query()
             ->select('disciplinas.id', 'disciplinas.nome', 'disciplinas.concurso_id')
@@ -28,7 +29,7 @@ class DisciplinasRepository
             });
     }
 
-    public function listRecentForUser(int $userId, int $limit = 3)
+    public function listRecentForUser(int $userId, int $limit = 3): Collection
     {
         return Disciplina::query()
             ->select('disciplinas.id', 'disciplinas.nome', 'disciplinas.concurso_id')
@@ -54,5 +55,18 @@ class DisciplinasRepository
     public function create(array $data): Disciplina
     {
         return Disciplina::query()->create($data);
+    }
+
+    public function update(Disciplina $disciplina, array $data): Disciplina
+    {
+        $disciplina->fill($data);
+        $disciplina->save();
+
+        return $disciplina->refresh();
+    }
+
+    public function delete(Disciplina $disciplina): void
+    {
+        $disciplina->delete();
     }
 }
