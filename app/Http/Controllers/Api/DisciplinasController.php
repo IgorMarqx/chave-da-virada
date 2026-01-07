@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Disciplina;
 use App\Services\DisciplinasService;
 use Illuminate\Http\Request;
-use App\Models\Disciplina;
 
 class DisciplinasController extends ApiController
 {
@@ -14,12 +14,16 @@ class DisciplinasController extends ApiController
 
     public function create(Request $request)
     {
+        $user = $request->user();
         $data = $request->validate([
             'concurso_id' => 'required|exists:concursos,id',
             'nome' => 'required|string|max:255',
         ]);
 
-        $disciplina = $this->disciplinasService->create($data);
+        $disciplina = $this->disciplinasService->create([
+            ...$data,
+            'user_id' => $user->id,
+        ]);
 
         return $this->apiSuccess($disciplina, 'Disciplina created successfully', 201);
     }
@@ -42,6 +46,10 @@ class DisciplinasController extends ApiController
 
     public function markAccessed(Disciplina $disciplina)
     {
+        if ((int) $disciplina->user_id !== (int) request()->user()->id) {
+            return $this->apiError('Disciplina not found', null, 404);
+        }
+
         $disciplina->forceFill(['accessed_at' => now()])->save();
 
         return $this->apiSuccess(null, 'Disciplina accessed_at updated');
