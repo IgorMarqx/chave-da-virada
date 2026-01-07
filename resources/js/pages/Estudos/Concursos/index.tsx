@@ -109,8 +109,8 @@ export default function ConcursoDisciplinas({ concurso }: PageProps) {
                                         {disciplina.topicos ?? 0} topicos
                                     </div>
                                 </div>
-                                <div className="flex w-full items-center gap-3 sm:w-auto">
-                                    <div className="h-2 w-full min-w-[120px] rounded-full bg-slate-100 sm:w-24">
+                                <div className="mt-2 flex w-full items-center gap-3">
+                                    <div className="h-2 w-full min-w-[120px] rounded-full bg-slate-100">
                                         <div
                                             className="h-full rounded-full bg-red-500 transition duration-500"
                                             style={{ width: `${disciplina.progresso ?? 0}%` }}
