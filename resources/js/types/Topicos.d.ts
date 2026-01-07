@@ -4,3 +4,9 @@ export type CreateTopicoData = {
     descricao?: string | null;
     ordem?: number | null;
 };
+
+export type UpdateTopicoData = {
+    nome: string;
+    descricao?: string | null;
+    ordem?: number | null;
+};
