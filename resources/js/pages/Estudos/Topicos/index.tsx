@@ -143,10 +143,10 @@ export default function TopicoDetalhe({ topico }: PageProps) {
                                 />
                                 <div className={`mt-2 grid gap-6 transition-all duration-500 ease-in-out ${isActiveStudyMode ? 'md:mx-auto md:max-w-md md:grid-cols-1' : 'md:grid-cols-3'}`}>
                                     <div className={`transition-all duration-500 ease-in-out overflow-hidden ${isActiveStudyMode ? 'max-h-0 opacity-0 hidden' : 'max-h-[400px] opacity-100'}`}>
-                                        <StudyActionsCard
-                                            onReview={() => router.visit(`/estudos/topicos/${topico.id}#historico`)}
-                                        />
-                                    </div>
+                                    <StudyActionsCard
+                                        onReview={() => router.visit(`/estudos/topicos/${topico.id}/revisao`)}
+                                    />
+                                </div>
 
                                     {!isActiveStudyMode && (
                                         <StudyFilesCard
@@ -159,6 +159,7 @@ export default function TopicoDetalhe({ topico }: PageProps) {
                                             estudos={estudos}
                                             isLoading={isLoadingEstudos}
                                             error={errorEstudos}
+                                            notesHtml={notes}
                                         />
                                     </div>
                                 </div>
