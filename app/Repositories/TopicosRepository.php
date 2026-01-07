@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Topico;
+
 class TopicosRepository
 {
     public function create(array $data): Topico
@@ -28,9 +29,10 @@ class TopicosRepository
                     ->where('tp.user_id', '=', $userId);
             })
             ->where('topicos.disciplina_id', $disciplinaId)
+            ->where('topicos.user_id', $userId)
             ->selectRaw('COALESCE(tp.mastery_score, 0) as mastery_score')
             ->selectRaw('tp.proxima_revisao as proxima_revisao')
-            ->selectRaw("tp.ultima_atividade")
+            ->selectRaw('tp.ultima_atividade')
             ->orderBy('topicos.ordem')
             ->get();
     }
@@ -44,6 +46,7 @@ class TopicosRepository
                     ->where('tp.user_id', '=', $userId);
             })
             ->where('topicos.id', $topicoId)
+            ->where('topicos.user_id', $userId)
             ->selectRaw('COALESCE(tp.mastery_score, 0) as mastery_score')
             ->selectRaw('tp.proxima_revisao as proxima_revisao')
             ->selectRaw("
