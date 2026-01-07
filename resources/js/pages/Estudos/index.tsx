@@ -26,7 +26,7 @@ export default function Estudos() {
 
                 <section className="grid min-w-0 gap-6 xl:grid-cols-[1.1fr_0.9fr]">
                     <ConcursosSection />
-                    <DisciplinasSection disciplinas={disciplinas} />
+                    <DisciplinasSection />
                 </section>
 
                 <section className="grid min-w-0 gap-6 xl:grid-cols-[1.1fr_0.9fr]">
