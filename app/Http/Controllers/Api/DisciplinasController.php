@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Services\DisciplinasService;
 use Illuminate\Http\Request;
+use App\Models\Disciplina;
 
 class DisciplinasController extends ApiController
 {
@@ -29,5 +30,20 @@ class DisciplinasController extends ApiController
         $disciplinas = $this->disciplinasService->listByConcursoForUser($concursoId, $user->id);
 
         return $this->apiSuccess($disciplinas, 'Disciplinas fetched successfully');
+    }
+
+    public function listRecent()
+    {
+        $user = request()->user();
+        $disciplinas = $this->disciplinasService->listRecentForUser($user->id);
+
+        return $this->apiSuccess($disciplinas, 'Recent disciplinas fetched successfully');
+    }
+
+    public function markAccessed(Disciplina $disciplina)
+    {
+        $disciplina->forceFill(['accessed_at' => now()])->save();
+
+        return $this->apiSuccess(null, 'Disciplina accessed_at updated');
     }
 }
