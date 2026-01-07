@@ -141,3 +141,49 @@
         @apply bg-background text-foreground;
     }
 }
+
+.ProseMirror p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    color: #94a3b8;
+    pointer-events: none;
+    height: 0;
+}
+
+.ProseMirror ul,
+.ProseMirror ol {
+    padding-left: 1.25rem;
+}
+
+.ProseMirror ul {
+    list-style: disc;
+}
+
+.ProseMirror ol {
+    list-style: decimal;
+}
+
+.ProseMirror blockquote {
+    border-left: 3px solid #e2e8f0;
+    padding-left: 0.75rem;
+    color: #64748b;
+}
+
+.ProseMirror table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.75rem;
+}
+
+.ProseMirror th,
+.ProseMirror td {
+    border: 1px solid #e2e8f0;
+    padding: 0.5rem 0.75rem;
+    vertical-align: top;
+}
+
+.ProseMirror th {
+    background: #f8fafc;
+    font-weight: 600;
+    color: #334155;
+}
