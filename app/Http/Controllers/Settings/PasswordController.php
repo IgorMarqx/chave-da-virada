@@ -29,9 +29,18 @@ class PasswordController extends Controller
             'password' => ['required', Password::defaults(), 'confirmed'],
         ]);
 
-        $request->user()->update([
+        $user = $request->user();
+        $wasForcedReset = (bool) $user->must_reset_password;
+
+        $user->update([
             'password' => $validated['password'],
+            'must_reset_password' => false,
+            'last_password_reset_at' => now(),
         ]);
+
+        if ($wasForcedReset) {
+            return redirect()->route('dashboard');
+        }
 
         return back();
     }
