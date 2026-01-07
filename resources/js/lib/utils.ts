@@ -67,3 +67,12 @@ export function readLocalStorageJson<T>(key: string, fallback: T): T {
 export function writeLocalStorageJson<T>(key: string, value: T) {
     localStorage.setItem(key, JSON.stringify(value));
 }
+
+export function formatDuration(totalSecondsValue: number) {
+    const safeSeconds = Math.max(0, Math.floor(totalSecondsValue));
+    const hours = Math.floor(safeSeconds / 3600);
+    const minutes = Math.floor((safeSeconds % 3600) / 60);
+    const seconds = safeSeconds % 60;
+
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+};
