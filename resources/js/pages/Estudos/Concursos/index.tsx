@@ -9,6 +9,9 @@ import InputError from '@/components/input-error';
 import { useGetDisciplinasByConcurso } from '@/hooks/Disciplinas/useGetDisciplinasByConcurso';
 import { Button } from '@headlessui/react';
 import { http } from '@/lib/http';
+import EditDisciplina from './components/EditDisciplina';
+import ConfirmDeleteDialog from '../components/common/ConfirmDeleteDialog';
+import { useDeleteDisciplina } from '@/hooks/Disciplinas/useDeleteDisciplina';
 
 type Disciplina = {
     id: number;
@@ -29,7 +32,12 @@ type PageProps = {
 
 export default function ConcursoDisciplinas({ concurso }: PageProps) {
     const [isOpen, setIsOpen] = useState(false);
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [editingDisciplina, setEditingDisciplina] = useState<Disciplina | null>(null);
+    const [deletingDisciplina, setDeletingDisciplina] = useState<Disciplina | null>(null);
     const { disciplinas, isLoading, error, fetchDisciplinas } = useGetDisciplinasByConcurso();
+    const { deleteDisciplina, isDeleting } = useDeleteDisciplina();
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Estudos', href: '/estudos' },
@@ -40,6 +48,29 @@ export default function ConcursoDisciplinas({ concurso }: PageProps) {
         fetchDisciplinas(concurso.id);
     }, [concurso.id, fetchDisciplinas]);
 
+    const handleEdit = (disciplina: Disciplina) => {
+        setEditingDisciplina(disciplina);
+        setIsEditOpen(true);
+    };
+
+    const handleDelete = (disciplina: Disciplina) => {
+        setDeletingDisciplina(disciplina);
+        setIsDeleteOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!deletingDisciplina) {
+            return;
+        }
+
+        const deleted = await deleteDisciplina(deletingDisciplina.id);
+        if (deleted) {
+            setIsDeleteOpen(false);
+            setDeletingDisciplina(null);
+            fetchDisciplinas(concurso.id);
+        }
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Disciplinas - ${concurso.nome}`} />
@@ -49,6 +80,21 @@ export default function ConcursoDisciplinas({ concurso }: PageProps) {
                 onOpenChange={setIsOpen}
                 concursoId={concurso.id}
                 onSuccess={() => fetchDisciplinas(concurso.id)}
+            />
+            <EditDisciplina
+                open={isEditOpen}
+                onOpenChange={setIsEditOpen}
+                disciplina={editingDisciplina}
+                onSuccess={() => fetchDisciplinas(concurso.id)}
+            />
+            <ConfirmDeleteDialog
+                open={isDeleteOpen}
+                onOpenChange={setIsDeleteOpen}
+                title="Excluir disciplina"
+                description={`Tem certeza que deseja excluir a disciplina "${deletingDisciplina?.nome ?? ''}"?`}
+                confirmLabel="Excluir disciplina"
+                isDeleting={isDeleting}
+                onConfirm={confirmDelete}
             />
 
             <div className="flex h-full w-full min-w-0 flex-1 flex-col gap-6 overflow-x-hidden rounded-3xl bg-gradient-to-br from-slate-50 via-red-50 to-rose-50 p-6">
@@ -123,9 +169,30 @@ export default function ConcursoDisciplinas({ concurso }: PageProps) {
                                     <span className="w-10 text-sm font-medium text-slate-500">
                                         {disciplina.progresso ?? 0}%
                                     </span>
-                                    <svg viewBox="0 0 24 24" className="size-4 text-slate-400 transition group-hover:text-red-500" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14m-6-6 6 6-6 6" />
-                                    </svg>
+                                    <div className="ml-auto flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={(event) => {
+                                                event.preventDefault();
+                                                event.stopPropagation();
+                                                handleEdit(disciplina);
+                                            }}
+                                            className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800"
+                                        >
+                                            Editar
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={(event) => {
+                                                event.preventDefault();
+                                                event.stopPropagation();
+                                                handleDelete(disciplina);
+                                            }}
+                                            className="rounded-full border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-600 transition hover:border-rose-300 hover:text-rose-700"
+                                        >
+                                            Excluir
+                                        </button>
+                                    </div>
                                 </div>
                             </Link>
                         ))}
