@@ -9,6 +9,7 @@ class ConcursosRepository
     {
         return Concurso::query()
             ->select('concursos.*')
+            ->where('concursos.user_id', $userId)
             ->leftJoin('disciplinas', 'disciplinas.concurso_id', '=', 'concursos.id')
             ->leftJoin('topicos', 'topicos.disciplina_id', '=', 'disciplinas.id')
             ->leftJoin('topico_progresso as tp', function ($join) use ($userId) {
