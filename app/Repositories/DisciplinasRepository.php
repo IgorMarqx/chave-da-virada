@@ -27,6 +27,28 @@ class DisciplinasRepository
             });
     }
 
+    public function listRecentForUser(int $userId, int $limit = 3)
+    {
+        return Disciplina::query()
+            ->select('disciplinas.id', 'disciplinas.nome', 'disciplinas.concurso_id')
+            ->leftJoin('topicos', 'topicos.disciplina_id', '=', 'disciplinas.id')
+            ->leftJoin('topico_progresso as tp', function ($join) use ($userId) {
+                $join->on('tp.topico_id', '=', 'topicos.id')
+                    ->where('tp.user_id', '=', $userId);
+            })
+            ->whereNotNull('disciplinas.accessed_at')
+            ->selectRaw('COUNT(topicos.id) as topicos')
+            ->selectRaw('COALESCE(AVG(COALESCE(tp.mastery_score, 0)), 0) as progresso')
+            ->groupBy('disciplinas.id', 'disciplinas.nome', 'disciplinas.concurso_id', 'disciplinas.accessed_at')
+            ->orderByDesc('disciplinas.accessed_at')
+            ->limit($limit)
+            ->get()
+            ->each(function (Disciplina $disciplina) {
+                $disciplina->progresso = (float) $disciplina->progresso;
+                $disciplina->topicos = (int) $disciplina->topicos;
+            });
+    }
+
     public function create(array $data): Disciplina
     {
         return Disciplina::query()->create($data);
