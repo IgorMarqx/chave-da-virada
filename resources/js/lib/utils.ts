@@ -29,3 +29,41 @@ export function formatDate(value?: string | null): string {
 
     return parsed.toLocaleDateString('pt-BR');
 }
+
+export function readCookieJson<T>(key: string): T | null {
+    const match = document.cookie.match(new RegExp(`(?:^|; )${key}=([^;]*)`));
+    if (!match) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(decodeURIComponent(match[1])) as T;
+    } catch {
+        return null;
+    }
+}
+
+export function writeCookieJson<T>(key: string, payload: T, maxAgeSeconds: number) {
+    const value = encodeURIComponent(JSON.stringify(payload));
+    document.cookie = `${key}=${value}; path=/; max-age=${maxAgeSeconds}`;
+}
+
+export function clearCookie(key: string) {
+    document.cookie = `${key}=; path=/; max-age=0`;
+}
+
+export function readLocalStorageJson<T>(key: string, fallback: T): T {
+    try {
+        const raw = localStorage.getItem(key);
+        if (!raw) {
+            return fallback;
+        }
+        return JSON.parse(raw) as T;
+    } catch {
+        return fallback;
+    }
+}
+
+export function writeLocalStorageJson<T>(key: string, value: T) {
+    localStorage.setItem(key, JSON.stringify(value));
+}
