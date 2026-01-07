@@ -36,6 +36,12 @@ test('login screen receives status message from the session', function () {
     );
 });
 
+test('guests are redirected to login when accessing protected routes', function () {
+    $response = $this->get(route('dashboard'));
+
+    $response->assertRedirect(route('login'));
+});
+
 test('users can authenticate using the login screen', function () {
     $user = User::factory()->withoutTwoFactor()->create();
 
