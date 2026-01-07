@@ -16,6 +16,7 @@ class DisciplinasRepository
                     ->where('tp.user_id', '=', $userId);
             })
             ->where('disciplinas.concurso_id', $concursoId)
+            ->where('disciplinas.user_id', $userId)
             ->selectRaw('COUNT(topicos.id) as topicos')
             ->selectRaw('COALESCE(AVG(COALESCE(tp.mastery_score, 0)), 0) as progresso')
             ->groupBy('disciplinas.id', 'disciplinas.nome', 'disciplinas.concurso_id')
@@ -37,6 +38,7 @@ class DisciplinasRepository
                     ->where('tp.user_id', '=', $userId);
             })
             ->whereNotNull('disciplinas.accessed_at')
+            ->where('disciplinas.user_id', $userId)
             ->selectRaw('COUNT(topicos.id) as topicos')
             ->selectRaw('COALESCE(AVG(COALESCE(tp.mastery_score, 0)), 0) as progresso')
             ->groupBy('disciplinas.id', 'disciplinas.nome', 'disciplinas.concurso_id', 'disciplinas.accessed_at')
