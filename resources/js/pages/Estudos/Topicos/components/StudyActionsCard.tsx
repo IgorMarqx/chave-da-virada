@@ -7,7 +7,7 @@ type StudyActionsCardProps = {
 
 export default function StudyActionsCard({ onReview }: StudyActionsCardProps) {
     return (
-        <Card className="border-red-100 bg-white/80 backdrop-blur-sm">
+        <Card className="border-red-100 bg-white/80 backdrop-blur-sm max-h-95 h-95">
             <CardHeader>
                 <CardTitle className="text-lg">Acoes de Estudo</CardTitle>
             </CardHeader>
