@@ -10,6 +10,7 @@ class Concurso extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'nome',
         'orgao',
         'data_prova',
