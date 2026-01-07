@@ -24,4 +24,5 @@ Route::middleware([
     Route::prefix('disciplinas')->group(base_path('routes/disciplinas.php'));
     Route::prefix('topicos')->group(base_path('routes/topicos.php'));
     Route::prefix('estudos')->group(base_path('routes/estudos.php'));
+    Route::prefix('anotacoes')->group(base_path('routes/anotacoes.php'));
 });
