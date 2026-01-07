@@ -3,7 +3,6 @@
 namespace App\Repositories;
 
 use App\Models\Topico;
-
 class TopicosRepository
 {
     public function create(array $data): Topico
