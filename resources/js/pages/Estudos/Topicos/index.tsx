@@ -102,6 +102,7 @@ export default function TopicoDetalhe({ topico }: PageProps) {
                         title={topico.nome}
                         description={topicoDetalhe?.descricao ?? 'Topico de estudo'}
                         status={studyStatus}
+                        onBack={() => router.visit(`/estudos/disciplinas/${topico.disciplina_id}`)}
                     />
 
                     <div className="mt-6">
