@@ -21,6 +21,7 @@ class TopicosController extends ApiController
 
     public function create(Request $request)
     {
+        $user = $request->user();
         $data = $request->validate([
             'disciplina_id' => 'required|exists:disciplinas,id',
             'nome' => 'required|string|max:255',
@@ -28,7 +29,10 @@ class TopicosController extends ApiController
             'ordem' => 'nullable|integer|min:0',
         ]);
 
-        $topico = $this->topicosService->create($data);
+        $topico = $this->topicosService->create([
+            ...$data,
+            'user_id' => $user->id,
+        ]);
 
         return $this->apiSuccess($topico, 'Topico created successfully', 201);
     }
