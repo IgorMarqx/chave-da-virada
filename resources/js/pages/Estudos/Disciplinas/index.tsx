@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
-import { type DragEvent, useEffect, useRef, useState } from 'react';
+import { type DragEvent, type TouchEvent, useEffect, useRef, useState } from 'react';
 import InputError from '@/components/input-error';
 import { useGetTopicosByDisciplina, type Topico } from '@/hooks/Topicos/useGetTopicosByDisciplina';
 import { useUpdateTopicosOrder } from '@/hooks/Topicos/useUpdateTopicosOrder';
@@ -87,6 +87,38 @@ export default function DisciplinaTopicos({ disciplina }: PageProps) {
         return next;
     };
 
+    const applyReorder = async (sourceId: number, targetId: number) => {
+        const previousOrder = orderedTopicos;
+        const nextOrder = reorderTopicos(orderedTopicos, sourceId, targetId);
+
+        if (nextOrder === orderedTopicos) {
+            return;
+        }
+
+        setOrderedTopicos(nextOrder);
+
+        const updated = await updateTopicosOrder(
+            disciplina.id,
+            nextOrder.map((topico) => topico.id)
+        );
+
+        if (!updated) {
+            setOrderedTopicos(previousOrder);
+            return;
+        }
+
+        setOrderedTopicos(updated);
+        setOrderSaved(true);
+
+        if (orderSavedTimeoutRef.current) {
+            clearTimeout(orderSavedTimeoutRef.current);
+        }
+
+        orderSavedTimeoutRef.current = setTimeout(() => {
+            setOrderSaved(false);
+        }, 2000);
+    };
+
     const handleDragStart = (event: DragEvent, id: number) => {
         setDraggedId(id);
         draggedRef.current = id;
@@ -118,29 +150,7 @@ export default function DisciplinaTopicos({ disciplina }: PageProps) {
             return;
         }
 
-        const previousOrder = orderedTopicos;
-        const nextOrder = reorderTopicos(orderedTopicos, sourceId, targetId);
-        setOrderedTopicos(nextOrder);
-
-        const updated = await updateTopicosOrder(
-            disciplina.id,
-            nextOrder.map((topico) => topico.id)
-        );
-
-        if (!updated) {
-            setOrderedTopicos(previousOrder);
-        } else {
-            setOrderedTopicos(updated);
-            setOrderSaved(true);
-
-            if (orderSavedTimeoutRef.current) {
-                clearTimeout(orderSavedTimeoutRef.current);
-            }
-
-            orderSavedTimeoutRef.current = setTimeout(() => {
-                setOrderSaved(false);
-            }, 2000);
-        }
+        await applyReorder(sourceId, targetId);
 
         setDraggedId(null);
         setDragOverId(null);
@@ -148,6 +158,43 @@ export default function DisciplinaTopicos({ disciplina }: PageProps) {
     };
 
     const handleDragEnd = () => {
+        setDraggedId(null);
+        setDragOverId(null);
+        draggedRef.current = null;
+    };
+
+    const handleTouchStart = (event: TouchEvent, id: number) => {
+        event.preventDefault();
+        setDraggedId(id);
+        draggedRef.current = id;
+        setDragOverId(null);
+    };
+
+    const handleTouchMove = (event: TouchEvent) => {
+        event.preventDefault();
+        const touch = event.touches[0];
+
+        if (!touch) {
+            return;
+        }
+
+        const element = document.elementFromPoint(touch.clientX, touch.clientY);
+        const card = element?.closest<HTMLElement>('[data-topico-id]');
+        const nextId = card ? Number(card.dataset.topicoId) : null;
+
+        if (nextId && draggedRef.current !== nextId) {
+            setDragOverId(nextId);
+        }
+    };
+
+    const handleTouchEnd = async () => {
+        const sourceId = draggedRef.current;
+        const targetId = dragOverId;
+
+        if (sourceId && targetId && sourceId !== targetId) {
+            await applyReorder(sourceId, targetId);
+        }
+
         setDraggedId(null);
         setDragOverId(null);
         draggedRef.current = null;
@@ -231,6 +278,9 @@ export default function DisciplinaTopicos({ disciplina }: PageProps) {
                                     onDragLeave={handleDragLeave}
                                     onDrop={handleDrop}
                                     onDragEnd={handleDragEnd}
+                                    onTouchStart={handleTouchStart}
+                                    onTouchMove={handleTouchMove}
+                                    onTouchEnd={handleTouchEnd}
                                     onEdit={handleEdit}
                                     onDelete={(item) => handleDelete({ id: item.id, nome: item.nome })}
                                 />
