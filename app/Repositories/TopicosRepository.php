@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Topico;
+
 class TopicosRepository
 {
     public function create(array $data): Topico
@@ -30,18 +31,9 @@ class TopicosRepository
             ->where('topicos.disciplina_id', $disciplinaId)
             ->selectRaw('COALESCE(tp.mastery_score, 0) as mastery_score')
             ->selectRaw('tp.proxima_revisao as proxima_revisao')
-            ->selectRaw("
-                CASE
-                    WHEN COALESCE(tp.mastery_score, 0) >= 100 THEN 'concluido'
-                    WHEN COALESCE(tp.mastery_score, 0) > 0 THEN 'em-andamento'
-                    ELSE 'nao-iniciado'
-                END as status
-            ")
+            ->selectRaw("tp.ultima_atividade")
             ->orderBy('topicos.ordem')
-            ->get()
-            ->each(function (Topico $topico) {
-                $topico->mastery_score = (float) $topico->mastery_score;
-            });
+            ->get();
     }
 
     public function findWithProgressForUser(int $topicoId, int $userId)
