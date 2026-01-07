@@ -1,13 +1,18 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { Head } from '@inertiajs/react';
+import { type DragEvent, useEffect, useRef, useState } from 'react';
 import InputError from '@/components/input-error';
-import { Spinner } from '@/components/ui/spinner';
-import { Button } from '@/components/ui/button';
-import EmptyState from '../components/common/EmptyState';
-import { useGetTopicosByDisciplina } from '@/hooks/Topicos/useGetTopicosByDisciplina';
+import { useGetTopicosByDisciplina, type Topico } from '@/hooks/Topicos/useGetTopicosByDisciplina';
+import { useUpdateTopicosOrder } from '@/hooks/Topicos/useUpdateTopicosOrder';
 import CreateTopico from './components/CreateTopico';
+import EditTopico from './components/EditTopico';
+import DeleteTopicoDialog from './components/DeleteTopicoDialog';
+import TopicoCard from './components/TopicoCard';
+import TopicosDragInstruction from './components/TopicosDragInstruction';
+import TopicosEmptyStateCard from './components/TopicosEmptyStateCard';
+import TopicosHeader from './components/TopicosHeader';
+import TopicosLoadingCard from './components/TopicosLoadingCard';
 
 type Disciplina = {
     id: number;
@@ -21,11 +26,132 @@ type PageProps = {
 
 export default function DisciplinaTopicos({ disciplina }: PageProps) {
     const { topicos, isLoading, error, fetchTopicos } = useGetTopicosByDisciplina();
+    const { updateTopicosOrder, isSaving, error: orderError } = useUpdateTopicosOrder();
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [orderedTopicos, setOrderedTopicos] = useState<Topico[]>([]);
+    const [draggedId, setDraggedId] = useState<number | null>(null);
+    const [dragOverId, setDragOverId] = useState<number | null>(null);
+    const [orderSaved, setOrderSaved] = useState(false);
+    const draggedRef = useRef<number | null>(null);
+    const orderSavedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [editingTopico, setEditingTopico] = useState<{
+        id: number;
+        nome: string;
+        descricao?: string | null;
+    } | null>(null);
+    const [deletingTopico, setDeletingTopico] = useState<{
+        id: number;
+        nome: string;
+    } | null>(null);
 
     useEffect(() => {
         fetchTopicos(disciplina.id);
     }, [disciplina.id, fetchTopicos]);
+
+    useEffect(() => {
+        setOrderedTopicos(topicos);
+    }, [topicos]);
+
+    useEffect(() => {
+        return () => {
+            if (orderSavedTimeoutRef.current) {
+                clearTimeout(orderSavedTimeoutRef.current);
+            }
+        };
+    }, []);
+
+    const handleEdit = (topico: { id: number; nome: string; descricao?: string | null }) => {
+        setEditingTopico(topico);
+        setIsEditOpen(true);
+    };
+
+    const handleDelete = (topico: { id: number; nome: string }) => {
+        setDeletingTopico(topico);
+        setIsDeleteOpen(true);
+    };
+
+    const reorderTopicos = (items: Topico[], sourceId: number, targetId: number) => {
+        const sourceIndex = items.findIndex((topico) => topico.id === sourceId);
+        const targetIndex = items.findIndex((topico) => topico.id === targetId);
+
+        if (sourceIndex === -1 || targetIndex === -1 || sourceIndex === targetIndex) {
+            return items;
+        }
+
+        const next = [...items];
+        const [moved] = next.splice(sourceIndex, 1);
+        next.splice(targetIndex, 0, moved);
+
+        return next;
+    };
+
+    const handleDragStart = (event: DragEvent, id: number) => {
+        setDraggedId(id);
+        draggedRef.current = id;
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', String(id));
+    };
+
+    const handleDragOver = (event: DragEvent, id: number) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+
+        if (draggedRef.current !== id) {
+            setDragOverId(id);
+        }
+    };
+
+    const handleDragLeave = () => {
+        setDragOverId(null);
+    };
+
+    const handleDrop = async (event: DragEvent, targetId: number) => {
+        event.preventDefault();
+        const sourceId = draggedRef.current;
+
+        if (sourceId === null || sourceId === targetId) {
+            setDraggedId(null);
+            setDragOverId(null);
+            draggedRef.current = null;
+            return;
+        }
+
+        const previousOrder = orderedTopicos;
+        const nextOrder = reorderTopicos(orderedTopicos, sourceId, targetId);
+        setOrderedTopicos(nextOrder);
+
+        const updated = await updateTopicosOrder(
+            disciplina.id,
+            nextOrder.map((topico) => topico.id)
+        );
+
+        if (!updated) {
+            setOrderedTopicos(previousOrder);
+        } else {
+            setOrderedTopicos(updated);
+            setOrderSaved(true);
+
+            if (orderSavedTimeoutRef.current) {
+                clearTimeout(orderSavedTimeoutRef.current);
+            }
+
+            orderSavedTimeoutRef.current = setTimeout(() => {
+                setOrderSaved(false);
+            }, 2000);
+        }
+
+        setDraggedId(null);
+        setDragOverId(null);
+        draggedRef.current = null;
+    };
+
+    const handleDragEnd = () => {
+        setDraggedId(null);
+        setDragOverId(null);
+        draggedRef.current = null;
+    };
 
     const formatDateTime = (value?: string | null) => {
         if (!value) {
@@ -44,106 +170,74 @@ export default function DisciplinaTopicos({ disciplina }: PageProps) {
         { title: disciplina.nome, href: `/estudos/disciplinas/${disciplina.id}` },
     ];
 
-    const statusConfig = {
-        'nao-iniciado': {
-            label: 'Nao iniciado',
-            className: 'bg-slate-100 text-slate-600',
-        },
-        'em-andamento': {
-            label: 'Em andamento',
-            className: 'bg-rose-100 text-rose-700',
-        },
-        concluido: {
-            label: 'Concluido',
-            className: 'bg-red-100 text-red-700',
-        },
-    };
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Topicos - ${disciplina.nome}`} />
 
-            <div className="flex h-full w-full min-w-0 flex-1 flex-col gap-6 overflow-x-hidden rounded-3xl bg-gradient-to-br from-slate-50 via-red-50 to-rose-50 p-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold text-slate-900">
-                            Topicos de {disciplina.nome}
-                        </h1>
-                        <p className="mt-1 text-sm text-slate-500">
-                            {topicos.length} topicos cadastrados
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button
-                            onClick={() => setIsCreateOpen(true)}
-                            className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-950"
-                        >
-                            Criar topico
-                        </Button>
-                        <Link
-                            href={`/estudos/concursos/${disciplina.concurso_id}`}
-                            className="rounded-full bg-red-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-600"
-                        >
-                            Voltar
-                        </Link>
-                    </div>
-                </div>
-
-                <InputError message={error ?? undefined} />
-                <CreateTopico
-                    disciplinaId={disciplina.id}
-                    open={isCreateOpen}
-                    onOpenChange={setIsCreateOpen}
-                    onSuccess={() => fetchTopicos(disciplina.id)}
-                />
-
-                {isLoading ? (
-                    <div className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
-                        <Spinner />
-                        Carregando topicos...
-                    </div>
-                ) : topicos.length === 0 ? (
-                    <EmptyState
-                        title="Nenhum topico encontrado"
-                        action="Criar topico"
-                        onAction={() => setIsCreateOpen(true)}
+            <div className="min-h-full bg-gradient-to-br from-slate-50 via-rose-50/30 to-orange-50/20">
+                <div className="mx-auto flex w-full max-w-8xl flex-1 flex-col gap-6 px-2 py-8 sm:px-6 lg:px-8">
+                    <TopicosHeader
+                        disciplinaNome={disciplina.nome}
+                        totalTopicos={orderedTopicos.length}
+                        backHref={`/estudos/concursos/${disciplina.concurso_id}`}
+                        onCreate={() => setIsCreateOpen(true)}
                     />
-                ) : (
-                    <div className="grid gap-4 md:grid-cols-2">
-                        {topicos.map((topico) => (
-                            <div
-                                key={topico.id}
-                                className="flex flex-col gap-4 rounded-2xl border border-slate-100 bg-white/90 p-5 shadow-sm transition hover:border-slate-200 hover:shadow-md md:flex-row md:items-center md:justify-between"
-                            >
-                                <div>
-                                    <div className="text-base font-semibold text-slate-900">
-                                        {topico.nome}
-                                    </div>
-                                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                                        {topico.ultima_atividade ? (
-                                            <span className="rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-600">
-                                                Última atividade: {formatDateTime(topico.ultima_atividade)}
-                                            </span>
-                                        ) : null}
-                                        {topico.proxima_revisao ? (
-                                            <span className="rounded-full bg-emerald-50 px-3 py-1 font-medium text-emerald-700">
-                                                Próxima revisão: {formatDateTime(topico.proxima_revisao)}
-                                            </span>
-                                        ) : null}
-                                    </div>
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                    <Link
-                                        href={`/estudos/topicos/${topico.id}`}
-                                        className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800"
-                                    >
-                                        Estudar
-                                    </Link>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+
+                    <InputError message={error ?? undefined} />
+                    <InputError message={orderError ?? undefined} />
+                    <CreateTopico
+                        disciplinaId={disciplina.id}
+                        open={isCreateOpen}
+                        onOpenChange={setIsCreateOpen}
+                        onSuccess={() => fetchTopicos(disciplina.id)}
+                    />
+                    <EditTopico
+                        topico={editingTopico}
+                        open={isEditOpen}
+                        onOpenChange={setIsEditOpen}
+                        onSuccess={() => fetchTopicos(disciplina.id)}
+                    />
+                    <DeleteTopicoDialog
+                        topico={deletingTopico}
+                        open={isDeleteOpen}
+                        onOpenChange={setIsDeleteOpen}
+                        onSuccess={() => {
+                            setDeletingTopico(null);
+                            fetchTopicos(disciplina.id);
+                        }}
+                    />
+
+                    {!isLoading && orderedTopicos.length > 1 ? (
+                        <TopicosDragInstruction isSaving={isSaving} orderSaved={orderSaved} />
+                    ) : null}
+
+                    {isLoading ? (
+                        <TopicosLoadingCard />
+                    ) : orderedTopicos.length === 0 ? (
+                        <TopicosEmptyStateCard onCreate={() => setIsCreateOpen(true)} />
+                    ) : (
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            {orderedTopicos.map((topico, index) => (
+                                <TopicoCard
+                                    key={topico.id}
+                                    topico={topico}
+                                    index={index}
+                                    draggedId={draggedId}
+                                    dragOverId={dragOverId}
+                                    isSaving={isSaving}
+                                    formatDateTime={formatDateTime}
+                                    onDragStart={handleDragStart}
+                                    onDragOver={handleDragOver}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={handleDrop}
+                                    onDragEnd={handleDragEnd}
+                                    onEdit={handleEdit}
+                                    onDelete={(item) => handleDelete({ id: item.id, nome: item.nome })}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
         </AppLayout>
     );
