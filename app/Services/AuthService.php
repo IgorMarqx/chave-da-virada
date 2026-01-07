@@ -37,6 +37,7 @@ class AuthService
             'token_type' => 'bearer',
             'expires_in' => auth('api')->factory()->getTTL() * 60,
             'user' => auth('api')->user(),
+            'must_reset_password' => (bool) auth('api')->user()?->must_reset_password,
         ];
     }
 }
