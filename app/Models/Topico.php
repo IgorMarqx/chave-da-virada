@@ -11,6 +11,7 @@ class Topico extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'disciplina_id',
         'nome',
         'descricao',
