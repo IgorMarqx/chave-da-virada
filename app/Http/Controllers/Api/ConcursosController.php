@@ -2,22 +2,19 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Requests\ConcursoRequest;
+use App\Models\Concurso;
 use App\Services\ConcursosService;
-use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 class ConcursosController extends ApiController
 {
     public function __construct(private readonly ConcursosService $concursosService) {}
 
-    public function create(Request $request)
+    public function create(ConcursoRequest $request): JsonResponse
     {
         $user = $request->user();
-        $data = $request->validate([
-            'nome' => 'required|string|max:255',
-            'orgao' => 'required|string|max:255',
-            'data_prova' => 'nullable|date',
-            'descricao' => 'nullable|string',
-        ]);
+        $data = $request->validated();
 
         $concurso = $this->concursosService->create([
             ...$data,
@@ -27,11 +24,29 @@ class ConcursosController extends ApiController
         return $this->apiSuccess($concurso, 'Concurso created successfully', 201);
     }
 
-    public function index()
+    public function index(): JsonResponse
     {
         $user = request()->user();
         $concursos = $this->concursosService->listForUser($user->id);
 
         return $this->apiSuccess($concursos, 'Concursos fetched successfully');
+    }
+
+    public function update(ConcursoRequest $request, Concurso $concurso): JsonResponse
+    {
+        $updated = $this->concursosService->update($concurso, $request->validated());
+
+        return $this->apiSuccess($updated, 'Concurso updated successfully');
+    }
+
+    public function destroy(Concurso $concurso): JsonResponse
+    {
+        if ((int) $concurso->user_id !== (int) request()->user()->id) {
+            return $this->apiError('Concurso not found', null, 404);
+        }
+
+        $this->concursosService->delete($concurso);
+
+        return $this->apiSuccess(null, 'Concurso deleted successfully');
     }
 }
