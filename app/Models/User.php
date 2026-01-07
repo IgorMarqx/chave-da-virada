@@ -26,6 +26,8 @@ class User extends Authenticatable implements JWTSubject
         'cpf',
         'role',
         'is_active',
+        'must_reset_password',
+        'last_password_reset_at',
         'password',
     ];
 
@@ -52,6 +54,8 @@ class User extends Authenticatable implements JWTSubject
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
+            'must_reset_password' => 'boolean',
+            'last_password_reset_at' => 'datetime',
         ];
     }
 
