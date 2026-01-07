@@ -12,6 +12,8 @@ import StudyActionsCard from './components/StudyActionsCard';
 import StudyFilesCard from './components/StudyFilesCard';
 import StudyHistoryCard from './components/StudyHistoryCard';
 import StudyNotesCard from './components/StudyNotesCard';
+import { readLocalStorageJson, writeLocalStorageJson } from '@/lib/utils';
+import { useGetAnotacaoByTopico } from '@/hooks/Anotacoes/useGetAnotacaoByTopico';
 
 type TopicoRef = {
     id: number;
@@ -27,13 +29,52 @@ type PageProps = {
 export default function TopicoDetalhe({ topico }: PageProps) {
     const { topico: topicoDetalhe, isLoading, error, fetchTopico } = useGetTopico();
     const { estudos, isLoading: isLoadingEstudos, error: errorEstudos, fetchEstudos } = useGetEstudosByTopico();
+    const { anotacao, fetchAnotacao } = useGetAnotacaoByTopico();
+
     const [studyStatus, setStudyStatus] = useState<'Nao iniciado' | 'Estudando' | 'Pausado'>('Nao iniciado');
     const [notes, setNotes] = useState('');
+    const studyStatusKey = `study_status_${topico.id}`;
+    const timerStateKey = `study_timer_state_${topico.id}`;
+    const [saveAnotacoes, setSaveAnotacoes] = useState(false);
 
     useEffect(() => {
         fetchTopico(topico.id);
         fetchEstudos(topico.id);
-    }, [fetchTopico, fetchEstudos, topico.id]);
+        fetchAnotacao(topico.id);
+    }, []);
+
+    useEffect(() => {
+        if (anotacao?.conteudo) {
+            setNotes(anotacao.conteudo);
+        }
+    }, [anotacao]);
+
+    useEffect(() => {
+        const storedStatus = readLocalStorageJson<'Nao iniciado' | 'Estudando' | 'Pausado' | null>(studyStatusKey, null);
+        const timerState = readLocalStorageJson<{
+            elapsedSeconds: number;
+            isRunning: boolean;
+            lastTimestamp?: number;
+        } | null>(timerStateKey, null);
+
+        if (timerState?.isRunning) {
+            setStudyStatus('Estudando');
+            return;
+        }
+
+        if (timerState && timerState.elapsedSeconds > 0) {
+            setStudyStatus('Pausado');
+            return;
+        }
+
+        if (storedStatus) {
+            setStudyStatus(storedStatus);
+        }
+    }, [studyStatusKey, timerStateKey]);
+
+    useEffect(() => {
+        writeLocalStorageJson(studyStatusKey, studyStatus);
+    }, [studyStatus, studyStatusKey]);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Estudos', href: '/estudos' },
@@ -42,6 +83,14 @@ export default function TopicoDetalhe({ topico }: PageProps) {
     ];
 
     const isActiveStudyMode = studyStatus !== 'Nao iniciado';
+
+    const handleSaveAnotacoes = () => {
+        setSaveAnotacoes(true);
+
+        setTimeout(() => {
+            setSaveAnotacoes(false);
+        }, 500);
+    }
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -65,13 +114,14 @@ export default function TopicoDetalhe({ topico }: PageProps) {
                             Carregando topico...
                         </div>
                     ) : (
-                        <div className="mt-2 flex flex-col gap-6">
+                        <div className="mt-2 flex flex-col">
                             <div className={isActiveStudyMode ? 'order-2' : 'order-1'}>
                                 <div className={isActiveStudyMode ? 'grid gap-2 md:grid-cols-2' : ''}>
                                     <StudyTimerCard
                                         topicoId={topico.id}
                                         onSaved={() => {
                                             fetchEstudos(topico.id).then(() => fetchTopico(topico.id));
+                                            handleSaveAnotacoes()
                                         }}
                                         onStatusChange={setStudyStatus}
                                     />
@@ -87,7 +137,9 @@ export default function TopicoDetalhe({ topico }: PageProps) {
                                 <StudyNotesCard
                                     notes={notes}
                                     onNotesChange={setNotes}
+                                    topicoId={topico.id}
                                     isActive={isActiveStudyMode}
+                                    savedAnotacoes={saveAnotacoes}
                                 />
                                 <div className={`mt-2 grid gap-6 transition-all duration-500 ease-in-out ${isActiveStudyMode ? 'md:mx-auto md:max-w-md md:grid-cols-1' : 'md:grid-cols-3'}`}>
                                     <div className={`transition-all duration-500 ease-in-out overflow-hidden ${isActiveStudyMode ? 'max-h-0 opacity-0 hidden' : 'max-h-[400px] opacity-100'}`}>
