@@ -27,7 +27,7 @@ export default function DisciplinasSection() {
                         Carregando disciplinas...
                     </div>
                 ) : !hasDisciplinas ? (
-                    <EmptyState title="Cadastre uma disciplina para continuar" action="Cadastrar disciplina" />
+                    <EmptyState title="Sem disciplinas acessadas" withoutAction={true} />
                 ) : (
                     disciplinas.map((disciplina) => (
                         <button
