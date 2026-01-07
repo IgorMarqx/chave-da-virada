@@ -8,8 +8,8 @@ type Topico = {
     nome: string;
     descricao?: string | null;
     ordem: number;
-    status: 'nao-iniciado' | 'em-andamento' | 'concluido';
     proxima_revisao?: string | null;
+    ultima_atividade?: string | null;
     mastery_score?: number;
 };
 
