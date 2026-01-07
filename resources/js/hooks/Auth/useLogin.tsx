@@ -25,12 +25,14 @@ export function useLogin() {
                 setAuthExpiresIn(expiresIn);
             }
 
+            const mustResetPassword = Boolean(response.data?.must_reset_password);
+
             router.post(
                 '/login',
                 { email, password },
                 {
                     onSuccess: () => {
-                        router.visit('/dashboard');
+                        router.visit(mustResetPassword ? '/first-access-password' : '/dashboard');
                     },
                     onError: () => {
                         notifications.danger(
