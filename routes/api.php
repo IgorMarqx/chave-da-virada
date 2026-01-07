@@ -26,4 +26,6 @@ Route::middleware([
     Route::prefix('estudos')->group(base_path('routes/estudos.php'));
     Route::prefix('anotacoes')->group(base_path('routes/anotacoes.php'));
     Route::prefix('arquivos')->group(base_path('routes/arquivos.php'));
+    Route::middleware('role:admin')->prefix('users')->group(base_path('routes/users.php'));
+    Route::patch('user-password', [\App\Http\Controllers\Api\UserPasswordController::class, 'update']);
 });
