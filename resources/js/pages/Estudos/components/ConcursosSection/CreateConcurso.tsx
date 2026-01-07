@@ -15,6 +15,7 @@ import { CreateConcursoData } from '@/types/Concursos';
 import { useForm } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import { Spinner } from '@/components/ui/spinner';
+import { useEffect } from 'react';
 
 type CreateConcursoProps = {
     open: boolean;
@@ -35,6 +36,14 @@ export default function CreateConcurso({
         descricao: '',
     });
 
+    useEffect(() => {
+        if (!error) {
+            reset();
+            onOpenChange(false);
+            onSuccess()
+        }
+    }, [error])
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-lg">
@@ -52,13 +61,7 @@ export default function CreateConcurso({
                     onSubmit={(event) => {
                         event.preventDefault();
 
-                        handleCreateConcurso(data).then(() => {
-                            if (!error) {
-                                reset();
-                                onOpenChange(false);
-                                onSuccess()
-                            }
-                        });
+                        handleCreateConcurso(data);
                     }}
                 >
                     <div className="grid gap-2">
