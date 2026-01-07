@@ -13,8 +13,8 @@ jobs:
       contents: read
     env:
       SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
-      HOST: ${{ vars.EC2_HOST }}
-      USER: ${{ vars.EC2_USER }}
+      HOST: ${{ secrets.EC2_HOST }}
+      USER: ${{ secrets.EC2_USER }}
 
     steps:
       - name: Checkout Repository
