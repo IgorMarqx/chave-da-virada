@@ -27,6 +27,17 @@ export default function DisciplinaTopicos({ disciplina }: PageProps) {
         fetchTopicos(disciplina.id);
     }, [disciplina.id, fetchTopicos]);
 
+    const formatDateTime = (value?: string | null) => {
+        if (!value) {
+            return '';
+        }
+
+        return new Date(value).toLocaleString('pt-BR', {
+            dateStyle: 'short',
+            timeStyle: 'short',
+        });
+    };
+
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Estudos', href: '/estudos' },
         { title: 'Disciplinas', href: `/estudos/concursos/${disciplina.concurso_id}` },
@@ -98,25 +109,25 @@ export default function DisciplinaTopicos({ disciplina }: PageProps) {
                         onAction={() => setIsCreateOpen(true)}
                     />
                 ) : (
-                    <div className="space-y-3">
+                    <div className="grid gap-4 md:grid-cols-2">
                         {topicos.map((topico) => (
                             <div
                                 key={topico.id}
-                                className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-4 md:flex-row md:items-center md:justify-between"
+                                className="flex flex-col gap-4 rounded-2xl border border-slate-100 bg-white/90 p-5 shadow-sm transition hover:border-slate-200 hover:shadow-md md:flex-row md:items-center md:justify-between"
                             >
                                 <div>
                                     <div className="text-base font-semibold text-slate-900">
                                         {topico.nome}
                                     </div>
                                     <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                                        <span
-                                            className={`rounded-full px-3 py-1 font-semibold ${statusConfig[topico.status].className}`}
-                                        >
-                                            {statusConfig[topico.status].label}
-                                        </span>
-                                        {topico.proxima_revisao ? (
+                                        {topico.ultima_atividade ? (
                                             <span className="rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-600">
-                                                Proxima revisao: {new Date(topico.proxima_revisao).toLocaleDateString('pt-BR')}
+                                                Última atividade: {formatDateTime(topico.ultima_atividade)}
+                                            </span>
+                                        ) : null}
+                                        {topico.proxima_revisao ? (
+                                            <span className="rounded-full bg-emerald-50 px-3 py-1 font-medium text-emerald-700">
+                                                Próxima revisão: {formatDateTime(topico.proxima_revisao)}
                                             </span>
                                         ) : null}
                                     </div>
@@ -124,21 +135,9 @@ export default function DisciplinaTopicos({ disciplina }: PageProps) {
                                 <div className="flex flex-wrap gap-2">
                                     <Link
                                         href={`/estudos/topicos/${topico.id}`}
-                                        className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white"
+                                        className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-800"
                                     >
                                         Estudar
-                                    </Link>
-                                    <Link
-                                        href={`/estudos/topicos/${topico.id}`}
-                                        className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700"
-                                    >
-                                        Revisar
-                                    </Link>
-                                    <Link
-                                        href={`/estudos/topicos/${topico.id}#historico`}
-                                        className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700"
-                                    >
-                                        Ver historico
                                     </Link>
                                 </div>
                             </div>
