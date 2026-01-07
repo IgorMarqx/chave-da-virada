@@ -8,19 +8,66 @@ import ProgressRing from './ProgressRing';
 import { Button } from '@headlessui/react';
 import { Link } from '@inertiajs/react';
 import { formatDate } from '@/lib/utils';
+import EditConcurso from './EditConcurso';
+import ConfirmDeleteDialog from '../common/ConfirmDeleteDialog';
+import { useDeleteConcurso } from '@/hooks/Concursos/useDeleteConcurso';
+import type { Concurso } from '@/types/Concursos';
 
 export default function ConcursosSection() {
     const { concursos, isLoading, error, fetchConcursos } = useGetConcurso();
     const hasConcursos = concursos.length > 0;
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [editingConcurso, setEditingConcurso] = useState<Concurso | null>(null);
+    const [deletingConcurso, setDeletingConcurso] = useState<Concurso | null>(null);
+    const { deleteConcurso, isDeleting } = useDeleteConcurso();
 
     useEffect(() => {
         fetchConcursos();
     }, []);
 
+    const handleEdit = (concurso: Concurso) => {
+        setEditingConcurso(concurso);
+        setIsEditOpen(true);
+    };
+
+    const handleDelete = (concurso: Concurso) => {
+        setDeletingConcurso(concurso);
+        setIsDeleteOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!deletingConcurso) {
+            return;
+        }
+
+        const deleted = await deleteConcurso(deletingConcurso.id);
+        if (deleted) {
+            setIsDeleteOpen(false);
+            setDeletingConcurso(null);
+            fetchConcursos();
+        }
+    };
+
     return (
         <>
             <CreateConcurso open={isCreateOpen} onOpenChange={setIsCreateOpen} onSuccess={fetchConcursos} />
+            <EditConcurso
+                open={isEditOpen}
+                onOpenChange={setIsEditOpen}
+                concurso={editingConcurso}
+                onSuccess={fetchConcursos}
+            />
+            <ConfirmDeleteDialog
+                open={isDeleteOpen}
+                onOpenChange={setIsDeleteOpen}
+                title="Excluir concurso"
+                description={`Tem certeza que deseja excluir o concurso "${deletingConcurso?.nome ?? ''}"?`}
+                confirmLabel="Excluir concurso"
+                isDeleting={isDeleting}
+                onConfirm={confirmDelete}
+            />
 
             <div className="min-w-0 rounded-3xl border border-white/80 bg-white/80 p-6 shadow-sm">
                 <div className="flex items-center justify-between">
@@ -74,6 +121,14 @@ export default function ConcursosSection() {
                                                     {concurso.orgao}
                                                 </span>
                                             ) : null}
+                                            <span className="flex items-center gap-1.5">
+                                                <span className="inline-flex size-6 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+                                                    <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h10" />
+                                                    </svg>
+                                                </span>
+                                                {concurso.disciplinas_count ?? 0} disciplinas
+                                            </span>
                                         </div>
                                     </div>
                                     <ProgressRing value={Math.round(concurso.progresso)} size={56} />
@@ -100,6 +155,23 @@ export default function ConcursosSection() {
                                             </span>
                                         </div>
                                     )}
+                                </div>
+
+                                <div className="mt-4 flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleEdit(concurso)}
+                                        className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800"
+                                    >
+                                        Editar
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDelete(concurso)}
+                                        className="rounded-full border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:border-rose-300 hover:text-rose-700"
+                                    >
+                                        Excluir
+                                    </button>
                                 </div>
 
                                 <div className="mt-3 flex flex-col">
