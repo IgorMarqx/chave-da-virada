@@ -11,6 +11,7 @@ class ConcursosController extends ApiController
 
     public function create(Request $request)
     {
+        $user = $request->user();
         $data = $request->validate([
             'nome' => 'required|string|max:255',
             'orgao' => 'required|string|max:255',
@@ -18,7 +19,10 @@ class ConcursosController extends ApiController
             'descricao' => 'nullable|string',
         ]);
 
-        $concurso = $this->concursosService->create($data);
+        $concurso = $this->concursosService->create([
+            ...$data,
+            'user_id' => $user->id,
+        ]);
 
         return $this->apiSuccess($concurso, 'Concurso created successfully', 201);
     }
