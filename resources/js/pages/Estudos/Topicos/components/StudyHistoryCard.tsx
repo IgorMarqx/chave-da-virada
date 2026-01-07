@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import InputError from '@/components/input-error';
+import { useState } from 'react';
+import StudyHistoryDetailsModal from './StudyHistoryDetailsModal';
 
 type Estudo = {
     id: number;
@@ -12,9 +14,11 @@ type StudyHistoryCardProps = {
     estudos: Estudo[];
     isLoading: boolean;
     error?: string | null;
+    notesHtml?: string;
 };
 
-export default function StudyHistoryCard({ estudos, isLoading, error }: StudyHistoryCardProps) {
+export default function StudyHistoryCard({ estudos, isLoading, error, notesHtml }: StudyHistoryCardProps) {
+    const [selectedEstudo, setSelectedEstudo] = useState<Estudo | null>(null);
     const formatDuration = (totalSeconds: number) => {
         const safeSeconds = Math.max(0, Math.floor(totalSeconds));
         const hours = Math.floor(safeSeconds / 3600);
@@ -53,11 +57,26 @@ export default function StudyHistoryCard({ estudos, isLoading, error }: StudyHis
                                 <div className="mt-1 text-xs text-slate-500">
                                     Duracao: {formatDuration(estudo.tempo_segundos)}
                                 </div>
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedEstudo(estudo)}
+                                        className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800"
+                                    >
+                                        Ver detalhes
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
                 )}
             </CardContent>
+            <StudyHistoryDetailsModal
+                estudo={selectedEstudo}
+                notesHtml={notesHtml}
+                onOpenChange={(open) => !open && setSelectedEstudo(null)}
+                formatDuration={formatDuration}
+            />
         </Card>
     );
 }
