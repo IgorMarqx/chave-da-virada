@@ -1,0 +1,66 @@
+name: Build and Deploy Dependencies
+
+on:
+  push:
+    branches:
+      - main  # Trigger para o branch principal
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+      HOST: ${{ vars.EC2_HOST }}
+      USER: ${{ vars.EC2_USER }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22
+
+      - name: Configure SSH Key
+        run: |
+          echo "$SSH_KEY" > private_key.pem
+          chmod 600 private_key.pem
+          mkdir -p ~/.ssh
+          # Adicionando o host para o arquivo known_hosts
+          echo "Checking SSH host $HOST"
+          ssh-keyscan -H $HOST >> ~/.ssh/known_hosts
+          cat ~/.ssh/known_hosts  # Verifica se a chave foi adicionada corretamente
+
+      - name: Install Dependencies
+        run: |
+          composer install --no-dev --optimize-autoloader
+          npm install
+          npm run build
+          tar -czvf dependencias_buildadas.tar.gz public/
+
+      - name: Transfer and Deploy
+        run: |
+          scp -i private_key.pem dependencias_buildadas.tar.gz $USER@$HOST:/var/www/chave-da-virada
+          ssh -i private_key.pem $USER@$HOST << 'EOF'
+            cd /var/www/chave-da-virada
+            tar -xzf dependencias_buildadas.tar.gz
+            rm dependencias_buildadas.tar.gz
+            git fetch
+            if [ $(git rev-parse HEAD) != $(git rev-parse @{u}) ]; then
+              git pull origin main
+            else
+              echo "Already up to date."
+            fi
+          EOF
+
+      - name: Cleanup
+        run: rm private_key.pem
