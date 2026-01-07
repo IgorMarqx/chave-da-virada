@@ -8,6 +8,7 @@ import { Spinner } from '@/components/ui/spinner';
 import InputError from '@/components/input-error';
 import { useGetDisciplinasByConcurso } from '@/hooks/Disciplinas/useGetDisciplinasByConcurso';
 import { Button } from '@headlessui/react';
+import { http } from '@/lib/http';
 
 type Disciplina = {
     id: number;
@@ -94,6 +95,9 @@ export default function ConcursoDisciplinas({ concurso }: PageProps) {
                                 key={disciplina.id}
                                 href={`/estudos/disciplinas/${disciplina.id}`}
                                 className="group flex min-h-[104px] flex-1 flex-wrap items-center gap-4 rounded-xl border border-slate-200 bg-white px-5 py-4 text-left shadow-sm transition duration-300 hover:border-red-300 hover:shadow-md"
+                                onClick={() => {
+                                    void http.post(`/disciplinas/${disciplina.id}/accessed`);
+                                }}
                             >
                                 <div className="flex size-12 items-center justify-center rounded-xl bg-red-50 text-red-600">
                                     <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.5">
