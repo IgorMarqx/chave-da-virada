@@ -3,7 +3,7 @@ name: Build and Deploy Dependencies
 on:
   push:
     branches:
-      - main  # Trigger para o branch principal
+      - main  # Trigger para o branch principa
 
 jobs:
   build-and-deploy:
