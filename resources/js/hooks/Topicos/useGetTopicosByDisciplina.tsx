@@ -2,7 +2,7 @@ import { notifications } from '@/components/ui/notification';
 import { http, isApiError } from '@/lib/http';
 import { useCallback, useState } from 'react';
 
-type Topico = {
+export type Topico = {
     id: number;
     disciplina_id: number;
     nome: string;
