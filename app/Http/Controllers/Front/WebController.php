@@ -61,4 +61,9 @@ class WebController extends Controller
             ],
         ]);
     }
+
+    public function users()
+    {
+        return Inertia::render('Users/index');
+    }
 }
