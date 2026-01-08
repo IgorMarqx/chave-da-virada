@@ -24,6 +24,8 @@ Route::middleware([
     Route::prefix('disciplinas')->group(base_path('routes/disciplinas.php'));
     Route::prefix('topicos')->group(base_path('routes/topicos.php'));
     Route::prefix('estudos')->group(base_path('routes/estudos.php'));
+    Route::prefix('revisoes')->group(base_path('routes/revisoes.php'));
+    Route::prefix('revisao')->group(base_path('routes/revisao.php'));
     Route::prefix('anotacoes')->group(base_path('routes/anotacoes.php'));
     Route::prefix('arquivos')->group(base_path('routes/arquivos.php'));
     Route::middleware('role:admin')->prefix('users')->group(base_path('routes/users.php'));
