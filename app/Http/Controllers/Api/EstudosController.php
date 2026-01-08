@@ -2,13 +2,18 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Requests\EstudosTopicosRequest;
 use App\Services\EstudosService;
+use App\Services\TopicosService;
+use App\Services\WeeklyReviewService;
 use Illuminate\Http\Request;
 
 class EstudosController extends ApiController
 {
     public function __construct(
-        private readonly EstudosService $estudosService
+        private readonly EstudosService $estudosService,
+        private readonly TopicosService $topicosService,
+        private readonly WeeklyReviewService $weeklyReviewService,
     ) {}
 
     public function listByTopico(int $topicoId)
@@ -33,5 +38,23 @@ class EstudosController extends ApiController
         $estudo = $this->estudosService->createForUser($user->id, $data);
 
         return $this->apiSuccess($estudo, 'Estudo created successfully', 201);
+    }
+
+    public function listTopicos(EstudosTopicosRequest $request)
+    {
+        $user = $request->user();
+        $validated = $request->validated();
+        $disciplinaId = $validated['disciplina_id'] ?? null;
+
+        $excludeTopicoIds = [];
+        if ($this->weeklyReviewService->isReviewDayForUser($user)) {
+            $excludeTopicoIds = $this->weeklyReviewService
+                ->getPendingWeeklyTopicoIdsForToday($user)
+                ->all();
+        }
+
+        $topicos = $this->topicosService->listForUser($user->id, $disciplinaId, $excludeTopicoIds);
+
+        return $this->apiSuccess($topicos, 'Topicos fetched successfully');
     }
 }
