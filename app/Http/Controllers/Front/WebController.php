@@ -20,6 +20,16 @@ class WebController extends Controller
         return Inertia::render('Estudos/index');
     }
 
+    public function revisao()
+    {
+        return Inertia::render('Revisao/index');
+    }
+
+    public function revisaoConfiguracao()
+    {
+        return Inertia::render('Revisao/configuracao/index');
+    }
+
     public function concursoDisciplinas(Concurso $concurso)
     {
         return Inertia::render('Estudos/Concursos/index', [
