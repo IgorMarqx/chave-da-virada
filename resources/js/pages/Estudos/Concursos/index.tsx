@@ -167,7 +167,7 @@ export default function ConcursoDisciplinas({ concurso }: PageProps) {
                                         />
                                     </div>
                                     <span className="w-10 text-sm font-medium text-slate-500">
-                                        {disciplina.progresso ?? 0}%
+                                        {disciplina.progresso?.toFixed(2) ?? 0}%
                                     </span>
                                     <div className="ml-auto flex items-center gap-2">
                                         <button
