@@ -43,6 +43,7 @@ import { TableHeader } from '@tiptap/extension-table-header';
 import { Spinner } from '@/components/ui/spinner';
 import { useUpsertAnotacao } from '@/hooks/Anotacoes/useUpsertAnotacao';
 import { cn } from '@/lib/utils';
+import { getAuthToken } from '@/lib/http';
 
 type StudyNotesCardProps = {
     notes: string;
@@ -148,7 +149,14 @@ export default function StudyNotesCard({
         highlightColor: undefined as string | undefined,
         hasHighlight: false,
     });
+    const [autosaveState, setAutosaveState] = useState<'idle' | 'saving' | 'saved'>('idle');
+    const [autosaveAt, setAutosaveAt] = useState<string | null>(null);
     const saveTriggerRef = useRef(false);
+    const autosaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const lastSavedRef = useRef('');
+    const hydratedRef = useRef(false);
+    const localDraftRef = useRef<string | null>(null);
+    const shouldPreferLocalDraftRef = useRef(false);
     const editor = useEditor({
         extensions: [
             StarterKit.configure({
@@ -185,9 +193,37 @@ export default function StudyNotesCard({
     });
 
     useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        if (hydratedRef.current) {
+            return;
+        }
+
+        const stored = window.localStorage.getItem(`topico-notes-${topicoId}`);
+        localDraftRef.current = stored;
+        shouldPreferLocalDraftRef.current = Boolean(stored);
+
+        if (stored) {
+            onNotesChange(stored);
+        }
+
+        hydratedRef.current = true;
+    }, [notes, onNotesChange, topicoId]);
+
+    useEffect(() => {
         if (!editor) {
             return;
         }
+
+        const localDraft = localDraftRef.current;
+        const shouldPreferLocalDraft = shouldPreferLocalDraftRef.current;
+
+        if (shouldPreferLocalDraft && localDraft && notes !== localDraft) {
+            return;
+        }
+
         if (notes !== editor.getHTML()) {
             editor.commands.setContent(notes || '', { emitUpdate: false });
         }
@@ -261,6 +297,97 @@ export default function StudyNotesCard({
         setPlainLength(editor.getText().trim().length);
     }, [editor, notes]);
 
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        window.localStorage.setItem(`topico-notes-${topicoId}`, notes);
+        localDraftRef.current = notes;
+        if (notes.trim()) {
+            shouldPreferLocalDraftRef.current = true;
+        }
+
+        if (!notes.trim()) {
+            return;
+        }
+
+        if (autosaveTimeoutRef.current) {
+            clearTimeout(autosaveTimeoutRef.current);
+        }
+
+        autosaveTimeoutRef.current = setTimeout(async () => {
+            if (notes === lastSavedRef.current) {
+                return;
+            }
+
+            setAutosaveState('saving');
+            const saved = await handleSave(
+                { topico_id: topicoId, conteudo: notes },
+                { silent: true }
+            );
+
+            if (saved) {
+                lastSavedRef.current = notes;
+                setAutosaveState('saved');
+                setAutosaveAt(new Date().toLocaleTimeString('pt-BR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                }));
+                window.localStorage.removeItem(`topico-notes-${topicoId}`);
+                localDraftRef.current = null;
+                shouldPreferLocalDraftRef.current = false;
+            } else {
+                setAutosaveState('idle');
+            }
+        }, 1200);
+
+        return () => {
+            if (autosaveTimeoutRef.current) {
+                clearTimeout(autosaveTimeoutRef.current);
+            }
+        };
+    }, [handleSave, notes, topicoId]);
+
+    const handleManualSave = async () => {
+        const saved = await handleSave({ topico_id: topicoId, conteudo: notes });
+        if (saved) {
+            lastSavedRef.current = notes;
+            setAutosaveState('saved');
+            setAutosaveAt(new Date().toLocaleTimeString('pt-BR', {
+                hour: '2-digit',
+                minute: '2-digit',
+            }));
+            window.localStorage.removeItem(`topico-notes-${topicoId}`);
+            localDraftRef.current = null;
+            shouldPreferLocalDraftRef.current = false;
+        }
+    };
+
+    const flushAutosave = useCallback(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        const currentNotes = notes.trim();
+        if (!currentNotes || currentNotes === lastSavedRef.current) {
+            return;
+        }
+
+        const token = getAuthToken();
+
+        void window.fetch('/api/anotacoes', {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({ topico_id: topicoId, conteudo: notes }),
+            keepalive: true,
+        });
+    }, [notes, topicoId]);
+
     const handleLink = () => {
         if (!editor) {
             return;
@@ -288,8 +415,29 @@ export default function StudyNotesCard({
         }
 
         saveTriggerRef.current = true;
-        handleSave({ topico_id: topicoId, conteudo: notes });
+        handleSave({ topico_id: topicoId, conteudo: notes }, { silent: true });
     }, [savedAnotacoes, isSaving, handleSave, notes, topicoId]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        const handlePageHide = () => flushAutosave();
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'hidden') {
+                flushAutosave();
+            }
+        };
+
+        window.addEventListener('pagehide', handlePageHide);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            window.removeEventListener('pagehide', handlePageHide);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, [flushAutosave]);
 
     const activeTextColor = toolbarState.textColor;
     const activeHighlightColor = toolbarState.highlightColor;
@@ -324,9 +472,7 @@ export default function StudyNotesCard({
                             </div>
                             <button
                                 type="button"
-                                onClick={() =>
-                                    handleSave({ topico_id: topicoId, conteudo: notes })
-                                }
+                                onClick={handleManualSave}
                                 disabled={isSaving}
                                 className={cn(
                                     'flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200',
@@ -584,6 +730,23 @@ export default function StudyNotesCard({
                                 </kbd>{' '}
                                 para italico
                             </p>
+                            <div className="flex items-center gap-2 text-xs text-emerald-600">
+                                <span
+                                    className={cn(
+                                        'h-2 w-2 rounded-full',
+                                        autosaveState === 'saving'
+                                            ? 'animate-pulse bg-amber-400'
+                                            : 'bg-emerald-400'
+                                    )}
+                                />
+                                <span>
+                                    {autosaveState === 'saving'
+                                        ? 'Salvando automaticamente...'
+                                        : autosaveAt
+                                            ? `Salvo automaticamente ${autosaveAt}`
+                                            : 'Salvo automaticamente'}
+                                </span>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
