@@ -17,6 +17,14 @@ class TopicosService
         return $this->topicosRepository->listByDisciplinaForUser($disciplinaId, $userId);
     }
 
+    /**
+     * @param  array<int, int>  $excludeTopicoIds
+     */
+    public function listForUser(int $userId, ?int $disciplinaId = null, array $excludeTopicoIds = []): Collection
+    {
+        return $this->topicosRepository->listForUser($userId, $disciplinaId, $excludeTopicoIds);
+    }
+
     public function create(array $data): Topico
     {
         if (! array_key_exists('ordem', $data) || $data['ordem'] === null) {
