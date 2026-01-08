@@ -14,7 +14,7 @@ import { clearAuthSession } from '@/lib/http';
 import { dashboard } from '@/routes';
 import { SharedData, type NavItem } from '@/types';
 import { router, Link, usePage } from '@inertiajs/react';
-import { LayoutGrid, LogOut, NotebookPen, Users2 } from 'lucide-react';
+import { LayoutGrid, LogOut, NotebookPen, RotateCcw, Settings, Users2 } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -30,6 +30,16 @@ const estudosNavItems: NavItem[] = [
         title: 'Estudos',
         href: '/estudos',
         icon: NotebookPen,
+    },
+    {
+        title: 'Revisao',
+        href: '/revisao',
+        icon: RotateCcw,
+    },
+    {
+        title: 'Configuracao',
+        href: '/revisao/configuracao',
+        icon: Settings,
     },
 ];
 
