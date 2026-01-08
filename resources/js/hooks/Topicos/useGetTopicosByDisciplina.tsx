@@ -23,7 +23,9 @@ export function useGetTopicosByDisciplina() {
         setIsLoading(true);
 
         try {
-            const response = await http.get(`/topicos/disciplina/${disciplinaId}`);
+            const response = await http.get('/estudos/topicos', {
+                params: { disciplina_id: disciplinaId },
+            });
 
             if (response.data?.success) {
                 setTopicos(response.data.data ?? []);
