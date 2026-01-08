@@ -14,7 +14,7 @@ export function SessionSummaryCard({
     notesCount,
 }: SessionSummaryCardProps) {
     return (
-        <Card className="mt-6 border-2 border-amber-100 bg-white/80 backdrop-blur-sm">
+        <Card className="border-2 border-amber-100 bg-white/80 backdrop-blur-sm">
             <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                     <Eye className="h-5 w-5 text-amber-600" />
