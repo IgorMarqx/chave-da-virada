@@ -1,13 +1,18 @@
 import { Button } from '@/components/ui/button';
 import { buildNotesDocument } from '@/pages/Estudos/Topicos/reviewComponents/notesExport';
-import { Expand, FileText } from 'lucide-react';
+import { Expand, FileText, Pencil } from 'lucide-react';
 
 type NotesSummaryCardProps = {
     notesHtml: string;
     setIsNotesOpen: (open: boolean) => void;
+    onEdit: () => void;
 };
 
-export default function NotesSummaryCard({ notesHtml, setIsNotesOpen }: NotesSummaryCardProps) {
+export default function NotesSummaryCard({
+    notesHtml,
+    setIsNotesOpen,
+    onEdit,
+}: NotesSummaryCardProps) {
     const downloadFile = (content: string, filename: string, mimeType: string) => {
         const blob = new Blob([content], { type: mimeType });
         const url = URL.createObjectURL(blob);
@@ -34,6 +39,15 @@ export default function NotesSummaryCard({ notesHtml, setIsNotesOpen }: NotesSum
                 >
                     <FileText className="mr-2 h-4 w-4" />
                     Word
+                </Button>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onEdit}
+                    className="bg-white/80 cursor-pointer"
+                >
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Editar
                 </Button>
                 <Button
                     variant="outline"
