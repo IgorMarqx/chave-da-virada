@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
-import { ArrowLeft, BookOpen, Expand, FileText, NotebookPen, Upload } from 'lucide-react';
+import { ArrowLeft, BookOpen, NotebookPen } from 'lucide-react';
 import { useGetTopico } from '@/hooks/Topicos/useGetTopico';
 import { useGetEstudosByTopico } from '@/hooks/Estudos/useGetEstudosByTopico';
 import { useGetAnotacaoByTopico } from '@/hooks/Anotacoes/useGetAnotacaoByTopico';
@@ -13,6 +13,8 @@ import { NotesModal } from '@/pages/Estudos/Topicos/reviewComponents/NotesModal'
 import { SessionSummaryCard } from '@/pages/Estudos/Topicos/reviewComponents/SessionSummaryCard';
 import NotesSummaryCard from './reviewComponents/NotesSummaryCard';
 import StudyFilesCard from './components/StudyFilesCard';
+import StudyNotesCard from './components/StudyNotesCard';
+import { cn } from '@/lib/utils';
 
 type TopicoRef = {
     id: number;
@@ -31,6 +33,7 @@ export default function TopicoRevisao({ topico }: PageProps) {
     const { anotacao, isLoading: isLoadingAnotacao, fetchAnotacao } = useGetAnotacaoByTopico();
     const [notesHtml, setNotesHtml] = useState('');
     const [isNotesOpen, setIsNotesOpen] = useState(false);
+    const [isEditingNotes, setIsEditingNotes] = useState(false);
 
     useEffect(() => {
         fetchTopico(topico.id)
@@ -85,42 +88,82 @@ export default function TopicoRevisao({ topico }: PageProps) {
                         </span>
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-6">
-                        <Card className="border-2 border-emerald-100 bg-white/80 backdrop-blur-sm">
-                            <CardHeader className="flex flex-row items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <NotebookPen className="h-5 w-5 text-emerald-600" />
-                                    <CardTitle className="text-lg">Minhas Anotacoes</CardTitle>
-                                </div>
-                                <span className="text-sm text-slate-500">
-                                    {notesCount} {notesCount === 1 ? 'anotacao' : 'anotacoes'}
-                                </span>
-                            </CardHeader>
-                            <CardContent className="space-y-4 max-h-[500px] overflow-y-auto">
-                                {isLoadingAnotacao ? (
-                                    <div className="flex items-center justify-center py-12 text-slate-500">
-                                        <Spinner />
-                                    </div>
-                                ) : notesCount === 0 ? (
-                                    <div className="flex flex-col items-center justify-center py-12 text-slate-500">
-                                        <NotebookPen className="h-12 w-12 mb-3 opacity-30" />
-                                        <p className="text-sm font-medium">Nenhuma anotacao ainda</p>
-                                        <p className="text-xs mt-1">Comece a estudar para criar anotacoes</p>
-                                    </div>
-                                ) : (
-                                    <NotesSummaryCard notesHtml={notesHtml} setIsNotesOpen={setIsNotesOpen} />
-                                )}
-                            </CardContent>
-                        </Card>
-
-                        <StudyFilesCard topicoId={topico.id} />
+                    <div
+                        className={cn(
+                            'transition-all duration-500 ease-out',
+                            isEditingNotes
+                                ? 'mb-6 max-h-[1200px] translate-y-0 opacity-100'
+                                : 'mb-0 max-h-0 -translate-y-4 overflow-hidden opacity-0'
+                        )}
+                    >
+                        <StudyNotesCard
+                            notes={notesHtml}
+                            onNotesChange={setNotesHtml}
+                            topicoId={topico.id}
+                            isActive={isEditingNotes}
+                            savedAnotacoes={false}
+                            onCloseEdit={() => setIsEditingNotes(false)}
+                        />
                     </div>
 
-                    <SessionSummaryCard
-                        isLoadingEstudos={isLoadingEstudos}
-                        totalSeconds={totalSeconds}
-                        notesCount={notesCount}
-                    />
+                    {!isEditingNotes ? (
+                        <>
+                            <div className="grid gap-6 md:grid-cols-2">
+                                <Card className="border-2 border-emerald-100 bg-white/80 backdrop-blur-sm">
+                                    <CardHeader className="flex flex-row items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <NotebookPen className="h-5 w-5 text-emerald-600" />
+                                            <CardTitle className="text-lg">Minhas Anotacoes</CardTitle>
+                                        </div>
+                                        <span className="text-sm text-slate-500">
+                                            {notesCount} {notesCount === 1 ? 'anotacao' : 'anotacoes'}
+                                        </span>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4 max-h-[500px] overflow-y-auto">
+                                        {isLoadingAnotacao ? (
+                                            <div className="flex items-center justify-center py-12 text-slate-500">
+                                                <Spinner />
+                                            </div>
+                                        ) : notesCount === 0 ? (
+                                            <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+                                                <NotebookPen className="h-12 w-12 mb-3 opacity-30" />
+                                                <p className="text-sm font-medium">Nenhuma anotacao ainda</p>
+                                                <p className="text-xs mt-1">Comece a estudar para criar anotacoes</p>
+                                            </div>
+                                        ) : (
+                                            <NotesSummaryCard
+                                                notesHtml={notesHtml}
+                                                setIsNotesOpen={setIsNotesOpen}
+                                                onEdit={() => setIsEditingNotes(true)}
+                                            />
+                                        )}
+                                    </CardContent>
+                                </Card>
+                                <StudyFilesCard topicoId={topico.id} />
+                            </div>
+
+                            <div className="mt-6">
+                                <SessionSummaryCard
+                                    isLoadingEstudos={isLoadingEstudos}
+                                    totalSeconds={totalSeconds}
+                                    notesCount={notesCount}
+                                />
+                            </div>
+                        </>
+                    ) : (
+                        <div
+                            className={cn(
+                                'grid gap-6 md:grid-cols-2 transition-all duration-500 ease-out',
+                                'translate-y-4 opacity-95'
+                            )}>
+                            <SessionSummaryCard
+                                isLoadingEstudos={isLoadingEstudos}
+                                totalSeconds={totalSeconds}
+                                notesCount={notesCount}
+                            />
+                            <StudyFilesCard topicoId={topico.id} />
+                        </div>
+                    )}
 
                     <NotesModal
                         isOpen={isNotesOpen}
