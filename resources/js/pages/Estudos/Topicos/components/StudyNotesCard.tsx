@@ -1,34 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import InputError from '@/components/input-error';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Button } from '@/components/ui/button';
-import {
-    Bold,
-    Italic,
-    Underline,
-    Strikethrough,
-    List,
-    ListOrdered,
-    Quote,
-    Code,
-    AlignLeft,
-    AlignCenter,
-    AlignRight,
-    Table2,
-    Link2,
-    Undo2,
-    Redo2,
-    Highlighter,
-    Palette,
-    NotebookPen,
-    Save,
-    Type,
-    LayoutList,
-    AlignJustify,
-    RotateCcw,
-    X,
-} from 'lucide-react';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { NotebookPen } from 'lucide-react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -42,10 +16,12 @@ import { Table } from '@tiptap/extension-table';
 import { TableRow } from '@tiptap/extension-table-row';
 import { TableCell } from '@tiptap/extension-table-cell';
 import { TableHeader } from '@tiptap/extension-table-header';
-import { Spinner } from '@/components/ui/spinner';
 import { useUpsertAnotacao } from '@/hooks/Anotacoes/useUpsertAnotacao';
 import { cn } from '@/lib/utils';
 import { getAuthToken } from '@/lib/http';
+import StudyNotesToolbar, { type StudyNotesToolbarState } from './StudyNotesToolbar';
+import StudyNotesHeaderActions from './StudyNotesHeaderActions';
+import useFloatingNotes from './useFloatingNotes';
 
 type StudyNotesCardProps = {
     notes: string;
@@ -55,77 +31,6 @@ type StudyNotesCardProps = {
     savedAnotacoes: boolean;
     onCloseEdit?: () => void;
 };
-
-type ToolbarButtonProps = {
-    onClick: () => void;
-    tooltip: string;
-    isActive?: boolean;
-    disabled?: boolean;
-    className?: string;
-    children: React.ReactNode;
-};
-
-function ToolbarButton({
-    onClick,
-    tooltip,
-    isActive = false,
-    disabled = false,
-    className,
-    children,
-}: ToolbarButtonProps) {
-    return (
-        <Tooltip>
-            <TooltipTrigger asChild>
-                <button
-                    type="button"
-                    onClick={onClick}
-                    disabled={disabled}
-                    className={cn(
-                        'flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200',
-                        'hover:scale-105 active:scale-95',
-                        isActive
-                            ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/25'
-                            : 'text-slate-600 hover:bg-emerald-50 hover:text-emerald-600',
-                        disabled && 'cursor-not-allowed opacity-50 hover:bg-transparent hover:text-slate-400',
-                        className
-                    )}
-                    aria-label={tooltip}
-                >
-                    {children}
-                </button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="bg-slate-800 text-xs text-white">
-                {tooltip}
-            </TooltipContent>
-        </Tooltip>
-    );
-}
-
-function ToolbarDivider() {
-    return (
-        <div className="mx-1 h-6 w-px bg-gradient-to-b from-transparent via-emerald-200 to-transparent" />
-    );
-}
-
-function ToolbarGroup({
-    label,
-    icon: Icon,
-    children,
-}: {
-    label: string;
-    icon: React.ElementType;
-    children: React.ReactNode;
-}) {
-    return (
-        <div className="flex items-center gap-0.5">
-            <div className="mr-1 flex items-center gap-1 rounded-md bg-emerald-50/50 px-1.5 py-0.5">
-                <Icon className="h-3 w-3 text-emerald-600" />
-                <span className="text-[10px] font-medium text-emerald-700">{label}</span>
-            </div>
-            {children}
-        </div>
-    );
-}
 
 export default function StudyNotesCard({
     notes,
@@ -137,7 +42,7 @@ export default function StudyNotesCard({
 }: StudyNotesCardProps) {
     const { isLoading: isSaving, error, handleSave } = useUpsertAnotacao();
     const [plainLength, setPlainLength] = useState(0);
-    const [toolbarState, setToolbarState] = useState({
+    const [toolbarState, setToolbarState] = useState<StudyNotesToolbarState>({
         bold: false,
         italic: false,
         underline: false,
@@ -232,6 +137,21 @@ export default function StudyNotesCard({
             editor.commands.setContent(notes || '', { emitUpdate: false });
         }
     }, [editor, notes]);
+
+    const {
+        isFloatingEnabled,
+        isFloatingOpen,
+        floatingMode,
+        openFloatingNotes,
+        toggleFloatingEnabled,
+    } = useFloatingNotes({
+        topicoId,
+        notes,
+        autosaveState,
+        autosaveAt,
+        onNotesChange,
+        editor,
+    });
 
     const syncToolbarState = useCallback(() => {
         if (!editor) {
@@ -443,10 +363,6 @@ export default function StudyNotesCard({
         };
     }, [flushAutosave]);
 
-    const activeTextColor = toolbarState.textColor;
-    const activeHighlightColor = toolbarState.highlightColor;
-    const hasTextColor = Boolean(activeTextColor);
-    const hasHighlight = toolbarState.hasHighlight;
 
     return (
         <TooltipProvider delayDuration={300}>
@@ -474,260 +390,23 @@ export default function StudyNotesCard({
                                     </p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                                {onCloseEdit ? (
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={onCloseEdit}
-                                        className="h-9 w-9 rounded-xl bg-white/20 text-white backdrop-blur-sm hover:bg-white/30"
-                                        aria-label="Fechar edicao"
-                                    >
-                                        <X className="h-4 w-4" />
-                                    </Button>
-                                ) : null}
-                                <button
-                                    type="button"
-                                    onClick={handleManualSave}
-                                    disabled={isSaving}
-                                    className={cn(
-                                        'flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200',
-                                        'bg-white/20 text-white backdrop-blur-sm',
-                                        'hover:scale-105 hover:bg-white/30 active:scale-95',
-                                        'disabled:cursor-not-allowed disabled:opacity-50'
-                                    )}
-                                >
-                                    {isSaving ? (
-                                        <>
-                                            <Spinner className="h-4 w-4 text-white" />
-                                            <span>Salvando...</span>
-                                        </>
-                                    ) : (
-                                        <div className="flex items-center gap-2 cursor-pointer">
-                                            <Save className="h-4 w-4" />
-                                            <span>Salvar</span>
-                                        </div>
-                                    )}
-                                </button>
-                            </div>
+                            <StudyNotesHeaderActions
+                                isSaving={isSaving}
+                                isFloatingEnabled={isFloatingEnabled}
+                                onOpenFloatingNotes={() => openFloatingNotes()}
+                                onToggleFloatingEnabled={toggleFloatingEnabled}
+                                onManualSave={handleManualSave}
+                                onCloseEdit={onCloseEdit}
+                            />
                         </div>
                     </CardHeader>
 
                     <CardContent className="p-0">
-                        <div className="flex flex-wrap items-center gap-3 border-b border-emerald-100/50 bg-white/80 px-4 py-3 backdrop-blur-sm">
-                            <ToolbarGroup label="Texto" icon={Type}>
-                                <ToolbarButton
-                                    onClick={() => editor?.chain().focus().toggleBold().run()}
-                                    isActive={toolbarState.bold}
-                                    tooltip="Negrito (Ctrl+B)"
-                                >
-                                    <Bold className="h-4 w-4" />
-                                </ToolbarButton>
-                                <ToolbarButton
-                                    onClick={() => editor?.chain().focus().toggleItalic().run()}
-                                    isActive={toolbarState.italic}
-                                    tooltip="Italico (Ctrl+I)"
-                                >
-                                    <Italic className="h-4 w-4" />
-                                </ToolbarButton>
-                                <ToolbarButton
-                                    onClick={() => editor?.chain().focus().toggleUnderline().run()}
-                                    isActive={toolbarState.underline}
-                                    tooltip="Sublinhado (Ctrl+U)"
-                                >
-                                    <Underline className="h-4 w-4" />
-                                </ToolbarButton>
-                                <ToolbarButton
-                                    onClick={() => editor?.chain().focus().toggleStrike().run()}
-                                    isActive={toolbarState.strike}
-                                    tooltip="Riscado"
-                                >
-                                    <Strikethrough className="h-4 w-4" />
-                                </ToolbarButton>
-                            </ToolbarGroup>
-
-                            <ToolbarDivider />
-
-                            <div className="flex items-center gap-2">
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <div
-                                            className={cn(
-                                                'flex items-center gap-1.5 rounded-lg border bg-white px-2 py-1 shadow-sm transition',
-                                                hasTextColor
-                                                    ? 'border-emerald-300 ring-1 ring-emerald-200'
-                                                    : 'border-emerald-100'
-                                            )}
-                                        >
-                                            <Palette className="h-3.5 w-3.5 text-emerald-600" />
-                                            <input
-                                                type="color"
-                                                value={activeTextColor ?? '#0f172a'}
-                                                onChange={(event) =>
-                                                    editor
-                                                        ?.chain()
-                                                        .focus()
-                                                        .setColor(event.target.value)
-                                                        .run()
-                                                }
-                                                className="h-5 w-5 cursor-pointer rounded border-0 bg-transparent p-0"
-                                                aria-label="Cor do texto"
-                                            />
-                                        </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="bottom" className="bg-slate-800 text-xs text-white">
-                                        Cor do texto
-                                    </TooltipContent>
-                                </Tooltip>
-
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <div
-                                            className={cn(
-                                                'flex items-center gap-1.5 rounded-lg border bg-white px-2 py-1 shadow-sm transition',
-                                                hasHighlight
-                                                    ? 'border-emerald-300 ring-1 ring-emerald-200'
-                                                    : 'border-emerald-100'
-                                            )}
-                                        >
-                                            <Highlighter className="h-3.5 w-3.5 text-amber-500" />
-                                            <input
-                                                type="color"
-                                                value={activeHighlightColor ?? '#fef08a'}
-                                                onChange={(event) =>
-                                                    editor
-                                                        ?.chain()
-                                                        .focus()
-                                                        .setHighlight({
-                                                            color: event.target.value,
-                                                        })
-                                                        .run()
-                                                }
-                                                className="h-5 w-5 cursor-pointer rounded border-0 bg-transparent p-0"
-                                                aria-label="Cor do destaque"
-                                            />
-                                        </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="bottom" className="bg-slate-800 text-xs text-white">
-                                        Destacar texto
-                                    </TooltipContent>
-                                </Tooltip>
-                            </div>
-
-                            <ToolbarDivider />
-
-                            <ToolbarGroup label="Listas" icon={LayoutList}>
-                                <ToolbarButton
-                                    onClick={() =>
-                                        editor?.chain().focus().toggleBulletList().run()
-                                    }
-                                    isActive={toolbarState.bulletList}
-                                    tooltip="Lista com marcadores"
-                                >
-                                    <List className="h-4 w-4" />
-                                </ToolbarButton>
-                                <ToolbarButton
-                                    onClick={() =>
-                                        editor?.chain().focus().toggleOrderedList().run()
-                                    }
-                                    isActive={toolbarState.orderedList}
-                                    tooltip="Lista numerada"
-                                >
-                                    <ListOrdered className="h-4 w-4" />
-                                </ToolbarButton>
-                                <ToolbarButton
-                                    onClick={() =>
-                                        editor?.chain().focus().toggleBlockquote().run()
-                                    }
-                                    isActive={toolbarState.blockquote}
-                                    tooltip="Citacao"
-                                >
-                                    <Quote className="h-4 w-4" />
-                                </ToolbarButton>
-                                <ToolbarButton
-                                    onClick={() => editor?.chain().focus().toggleCode().run()}
-                                    isActive={toolbarState.code}
-                                    tooltip="Codigo"
-                                >
-                                    <Code className="h-4 w-4" />
-                                </ToolbarButton>
-                            </ToolbarGroup>
-
-                            <ToolbarDivider />
-
-                            <ToolbarGroup label="Alinhar" icon={AlignJustify}>
-                                <ToolbarButton
-                                    onClick={() =>
-                                        editor?.chain().focus().setTextAlign('left').run()
-                                    }
-                                    isActive={toolbarState.align === 'left'}
-                                    tooltip="Alinhar a esquerda"
-                                >
-                                    <AlignLeft className="h-4 w-4" />
-                                </ToolbarButton>
-                                <ToolbarButton
-                                    onClick={() =>
-                                        editor?.chain().focus().setTextAlign('center').run()
-                                    }
-                                    isActive={toolbarState.align === 'center'}
-                                    tooltip="Centralizar"
-                                >
-                                    <AlignCenter className="h-4 w-4" />
-                                </ToolbarButton>
-                                <ToolbarButton
-                                    onClick={() =>
-                                        editor?.chain().focus().setTextAlign('right').run()
-                                    }
-                                    isActive={toolbarState.align === 'right'}
-                                    tooltip="Alinhar a direita"
-                                >
-                                    <AlignRight className="h-4 w-4" />
-                                </ToolbarButton>
-                            </ToolbarGroup>
-
-                            <ToolbarDivider />
-
-                            <ToolbarButton
-                                onClick={handleLink}
-                                isActive={toolbarState.link}
-                                tooltip="Inserir link"
-                            >
-                                <Link2 className="h-4 w-4" />
-                            </ToolbarButton>
-                            <ToolbarButton
-                                onClick={() =>
-                                    editor
-                                        ?.chain()
-                                        .focus()
-                                        .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
-                                        .run()
-                                }
-                                isActive={toolbarState.table}
-                                tooltip="Inserir tabela"
-                            >
-                                <Table2 className="h-4 w-4" />
-                            </ToolbarButton>
-
-                            <ToolbarDivider />
-
-                            <ToolbarGroup label="Historico" icon={RotateCcw}>
-                                <ToolbarButton
-                                    onClick={() => editor?.chain().focus().undo().run()}
-                                    disabled={!editor?.can().undo()}
-                                    tooltip="Desfazer (Ctrl+Z)"
-                                >
-                                    <Undo2 className="h-4 w-4" />
-                                </ToolbarButton>
-                                <ToolbarButton
-                                    onClick={() => editor?.chain().focus().redo().run()}
-                                    disabled={!editor?.can().redo()}
-                                    tooltip="Refazer (Ctrl+Y)"
-                                >
-                                    <Redo2 className="h-4 w-4" />
-                                </ToolbarButton>
-                            </ToolbarGroup>
-                        </div>
+                        <StudyNotesToolbar
+                            editor={editor}
+                            toolbarState={toolbarState}
+                            onLink={handleLink}
+                        />
 
                         <div className="relative">
                             <div className="max-h-[350px] overflow-y-auto bg-white">
@@ -768,6 +447,13 @@ export default function StudyNotesCard({
                         </div>
                     </CardContent>
                 </Card>
+                {isFloatingOpen && floatingMode ? (
+                    <div className="mt-2 text-xs text-emerald-700">
+                        {floatingMode === 'pip'
+                            ? 'Janela PiP ativa. Voce pode continuar anotando fora da pagina.'
+                            : 'Janela flutuante ativa. Voce pode continuar anotando fora da pagina.'}
+                    </div>
+                ) : null}
                 <div className="mt-2">
                     <InputError message={error ?? undefined} />
                 </div>
