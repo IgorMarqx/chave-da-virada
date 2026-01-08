@@ -8,11 +8,15 @@ type UpsertAnotacaoData = {
     conteudo: string;
 };
 
+type UpsertAnotacaoOptions = {
+    silent?: boolean;
+};
+
 export function useUpsertAnotacao() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const handleSave = async (data: UpsertAnotacaoData) => {
+    const handleSave = async (data: UpsertAnotacaoData, options: UpsertAnotacaoOptions = {}) => {
         setError(null);
         setIsLoading(true);
 
@@ -20,19 +24,25 @@ export function useUpsertAnotacao() {
             const response = await http.post('/anotacoes', { ...data });
 
             if (response.data?.success) {
-                notifications.success('Anotacoes salvas com sucesso!');
+                if (! options.silent) {
+                    notifications.success('Anotacoes salvas com sucesso!');
+                }
             }
             return response.data?.data ?? null;
         } catch (err) {
             if (isApiError(err)) {
                 if (err.response?.data?.message) {
                     setError(err.response.data.message);
-                    notifications.danger(err.response.data.message);
+                    if (! options.silent) {
+                        notifications.danger(err.response.data.message);
+                    }
                     return null;
                 }
             }
             setError('An unexpected error occurred. Please try again.');
-            notifications.danger('An unexpected error occurred. Please try again.');
+            if (! options.silent) {
+                notifications.danger('An unexpected error occurred. Please try again.');
+            }
             return null;
         } finally {
             setIsLoading(false);
