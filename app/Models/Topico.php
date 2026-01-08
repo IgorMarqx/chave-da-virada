@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Topico extends Model
 {
@@ -21,5 +22,10 @@ class Topico extends Model
     public function disciplina(): BelongsTo
     {
         return $this->belongsTo(Disciplina::class);
+    }
+
+    public function revisoes(): HasMany
+    {
+        return $this->hasMany(Revisao::class);
     }
 }
