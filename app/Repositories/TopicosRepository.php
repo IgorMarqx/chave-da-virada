@@ -38,6 +38,35 @@ class TopicosRepository
             ->get();
     }
 
+    /**
+     * @param  array<int, int>  $excludeTopicoIds
+     */
+    public function listForUser(int $userId, ?int $disciplinaId = null, array $excludeTopicoIds = []): Collection
+    {
+        $query = Topico::query()
+            ->select('topicos.id', 'topicos.disciplina_id', 'topicos.nome', 'topicos.descricao', 'topicos.ordem')
+            ->leftJoin('topico_progresso as tp', function ($join) use ($userId) {
+                $join->on('tp.topico_id', '=', 'topicos.id')
+                    ->where('tp.user_id', '=', $userId);
+            })
+            ->where('topicos.user_id', $userId)
+            ->selectRaw('COALESCE(tp.mastery_score, 0) as mastery_score')
+            ->selectRaw('tp.proxima_revisao as proxima_revisao')
+            ->selectRaw('tp.ultima_atividade');
+
+        if ($disciplinaId !== null) {
+            $query->where('topicos.disciplina_id', $disciplinaId);
+        }
+
+        if ($excludeTopicoIds !== []) {
+            $query->whereNotIn('topicos.id', $excludeTopicoIds);
+        }
+
+        return $query
+            ->orderBy('topicos.ordem')
+            ->get();
+    }
+
     public function findWithProgressForUser(int $topicoId, int $userId): ?Topico
     {
         return Topico::query()
