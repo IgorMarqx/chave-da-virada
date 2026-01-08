@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import InputError from '@/components/input-error';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
 import {
     Bold,
     Italic,
@@ -26,6 +27,7 @@ import {
     LayoutList,
     AlignJustify,
     RotateCcw,
+    X,
 } from 'lucide-react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -51,6 +53,7 @@ type StudyNotesCardProps = {
     topicoId: number;
     isActive: boolean;
     savedAnotacoes: boolean;
+    onCloseEdit?: () => void;
 };
 
 type ToolbarButtonProps = {
@@ -130,6 +133,7 @@ export default function StudyNotesCard({
     topicoId,
     isActive,
     savedAnotacoes,
+    onCloseEdit,
 }: StudyNotesCardProps) {
     const { isLoading: isSaving, error, handleSave } = useUpsertAnotacao();
     const [plainLength, setPlainLength] = useState(0);
@@ -470,29 +474,43 @@ export default function StudyNotesCard({
                                     </p>
                                 </div>
                             </div>
-                            <button
-                                type="button"
-                                onClick={handleManualSave}
-                                disabled={isSaving}
-                                className={cn(
-                                    'flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200',
-                                    'bg-white/20 text-white backdrop-blur-sm',
-                                    'hover:scale-105 hover:bg-white/30 active:scale-95',
-                                    'disabled:cursor-not-allowed disabled:opacity-50'
-                                )}
-                            >
-                                {isSaving ? (
-                                    <>
-                                        <Spinner className="h-4 w-4 text-white" />
-                                        <span>Salvando...</span>
-                                    </>
-                                ) : (
-                                    <div className="flex items-center gap-2 cursor-pointer">
-                                        <Save className="h-4 w-4" />
-                                        <span>Salvar</span>
-                                    </div>
-                                )}
-                            </button>
+                            <div className="flex items-center gap-2">
+                                {onCloseEdit ? (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={onCloseEdit}
+                                        className="h-9 w-9 rounded-xl bg-white/20 text-white backdrop-blur-sm hover:bg-white/30"
+                                        aria-label="Fechar edicao"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                ) : null}
+                                <button
+                                    type="button"
+                                    onClick={handleManualSave}
+                                    disabled={isSaving}
+                                    className={cn(
+                                        'flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200',
+                                        'bg-white/20 text-white backdrop-blur-sm',
+                                        'hover:scale-105 hover:bg-white/30 active:scale-95',
+                                        'disabled:cursor-not-allowed disabled:opacity-50'
+                                    )}
+                                >
+                                    {isSaving ? (
+                                        <>
+                                            <Spinner className="h-4 w-4 text-white" />
+                                            <span>Salvando...</span>
+                                        </>
+                                    ) : (
+                                        <div className="flex items-center gap-2 cursor-pointer">
+                                            <Save className="h-4 w-4" />
+                                            <span>Salvar</span>
+                                        </div>
+                                    )}
+                                </button>
+                            </div>
                         </div>
                     </CardHeader>
 
