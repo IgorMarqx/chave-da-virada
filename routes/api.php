@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ReverbConfigController;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Http\Request;
@@ -19,6 +20,8 @@ Route::middleware([
     StartSession::class,
     'jwt.auth',
 ])->group(function () {
+    Route::get('reverb-config', ReverbConfigController::class)->name('api.reverb-config');
+
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
