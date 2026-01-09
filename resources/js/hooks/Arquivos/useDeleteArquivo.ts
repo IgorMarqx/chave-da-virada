@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { http, isApiError } from '@/lib/http';
+import { notifications } from '@/components/ui/notification';
 
 export function useDeleteArquivo() {
     const [isDeleting, setIsDeleting] = useState(false);
@@ -11,11 +12,14 @@ export function useDeleteArquivo() {
 
         try {
             await http.delete(`/arquivos/${arquivoId}`);
+
+            notifications.success('Arquivo apagado com sucesso.');
             return true;
         } catch (err) {
             if (isApiError(err)) {
                 if (err.response?.data?.message) {
                     setError(err.response.data.message);
+                    notifications.danger(err.response.data.message);
                     return false;
                 }
             }
