@@ -116,7 +116,7 @@ class WeeklyReviewService
         return Revisao::query()
             ->with(['topico.disciplina.concurso'])
             ->where('user_id', $user->id)
-            ->where('status', 'pendente')
+            ->whereIn('status', ['pendente', 'em_andamento'])
             ->where('tipo', 'semanal')
             ->whereBetween('data_revisao', [$today, $todayEnd])
             ->get();
