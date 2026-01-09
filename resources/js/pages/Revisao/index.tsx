@@ -1,12 +1,22 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
-import { useEffect } from 'react';
+import { Head, router } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 import { Spinner } from '@/components/ui/spinner';
 import InputError from '@/components/input-error';
 import EmptyState from '../Estudos/components/common/EmptyState';
 import { useGetRevisoesHoje } from '@/hooks/Revisoes/useGetRevisoesHoje';
 import { useConcluirRevisao } from '@/hooks/Revisoes/useConcluirRevisao';
+import { useIniciarRevisao } from '@/hooks/Revisoes/useIniciarRevisao';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Revisao', href: '/estudos/revisao' },
@@ -28,6 +38,8 @@ const formatDateTime = (value?: string | null): string => {
 export default function RevisaoHoje() {
     const { revisoes, isLoading, error, fetchRevisoesHoje } = useGetRevisoesHoje();
     const { concluirRevisao, isSaving } = useConcluirRevisao();
+    const { iniciarRevisao, isSaving: isStarting } = useIniciarRevisao();
+    const [confirmRevisaoId, setConfirmRevisaoId] = useState<number | null>(null);
 
     useEffect(() => {
         fetchRevisoesHoje();
@@ -37,6 +49,17 @@ export default function RevisaoHoje() {
         const saved = await concluirRevisao(revisaoId);
         if (saved) {
             fetchRevisoesHoje();
+        }
+    };
+
+    const handleIniciar = async (revisaoId: number, topicoId?: number | null) => {
+        if (!topicoId) {
+            return;
+        }
+
+        const saved = await iniciarRevisao(revisaoId);
+        if (saved) {
+            router.visit(`/revisao/${topicoId}`);
         }
     };
 
@@ -71,6 +94,7 @@ export default function RevisaoHoje() {
                             const topico = revisao.topico;
                             const disciplina = topico?.disciplina;
                             const concurso = disciplina?.concurso;
+                            const isEmAndamento = revisao.status === 'em_andamento';
 
                             return (
                                 <div
@@ -92,20 +116,72 @@ export default function RevisaoHoje() {
                                         </p>
                                     </div>
 
-                                    <button
-                                        type="button"
-                                        onClick={() => handleConcluir(revisao.id)}
-                                        disabled={isSaving}
-                                        className="mt-4 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
-                                    >
-                                        {isSaving ? 'Concluindo...' : 'Concluir revisao'}
-                                    </button>
+                                    {isEmAndamento ? (
+                                        <div className="mt-4 flex flex-wrap gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => router.visit(`/revisao/${topico?.id ?? ''}`)}
+                                                disabled={!topico?.id}
+                                                className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+                                            >
+                                                Continuar revisao
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setConfirmRevisaoId(revisao.id)}
+                                                disabled={isSaving}
+                                                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+                                            >
+                                                {isSaving ? 'Concluindo...' : 'Concluir revisao'}
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => handleIniciar(revisao.id, topico?.id)}
+                                            disabled={isStarting}
+                                            className="mt-4 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+                                        >
+                                            {isStarting ? 'Iniciando...' : 'Começar revisao'}
+                                        </button>
+                                    )}
                                 </div>
                             );
                         })}
                     </div>
                 )}
             </div>
+
+            <Dialog open={confirmRevisaoId !== null} onOpenChange={(open) => !open && setConfirmRevisaoId(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Concluir revisao?</DialogTitle>
+                        <DialogDescription>
+                            Ao concluir, esta revisao sera marcada como finalizada.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2">
+                        <Button type="button" variant="secondary" onClick={() => setConfirmRevisaoId(null)}>
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={async () => {
+                                if (confirmRevisaoId === null) {
+                                    return;
+                                }
+                                const revisaoId = confirmRevisaoId;
+                                setConfirmRevisaoId(null);
+                                await handleConcluir(revisaoId);
+                            }}
+                            disabled={isSaving}
+                        >
+                            {isSaving ? 'Concluindo...' : 'Concluir revisao'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }
