@@ -18,7 +18,7 @@ import StudyFilesDeleteModal from './StudyFilesDeleteModal';
 import { Spinner } from '@/components/ui/spinner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import StudyFilesProcessedModal from './StudyFilesProcessedModal';
-import { echo } from '@/lib/echo';
+import { getEcho } from '@/lib/echo';
 import { usePage } from '@inertiajs/react';
 import type { SharedData } from '@/types';
 
@@ -80,32 +80,51 @@ export default function StudyFilesCard({ topicoId }: StudyFilesCardProps) {
     }, [fetchArquivos, topicoId]);
 
     useEffect(() => {
-        if (!echo || !props.auth?.user?.id) {
-            if (!echo) {
-                console.warn('[arquivos] echo nao inicializado');
-            }
-            return;
-        }
+        let mounted = true;
+        let cleanup: (() => void) | null = null;
 
-        const userId = props.auth.user.id;
-        const channel = echo.private(`arquivos.${userId}`);
-        const handler = (event: { topico_id?: number | null }) => {
-            console.info('[arquivos] evento recebido', event);
-            if (event?.topico_id !== topicoId) {
+        const setup = async () => {
+            if (!props.auth?.user?.id) {
                 return;
             }
 
-            fetchArquivos(topicoId);
-            setIsProcessedOpen(true);
+            const echo = await getEcho();
+            if (!mounted || !echo) {
+                if (!echo) {
+                    console.warn('[arquivos] echo nao inicializado');
+                }
+                return;
+            }
+
+            const userId = props.auth.user.id;
+            const channel = echo.private(`arquivos.${userId}`);
+            const handler = (event: { topico_id?: number | null }) => {
+                console.info('[arquivos] evento recebido', event);
+                if (event?.topico_id !== topicoId) {
+                    return;
+                }
+
+                fetchArquivos(topicoId);
+                setIsProcessedOpen(true);
+            };
+
+            console.info('[arquivos] ouvindo canal', `arquivos.${userId}`);
+            channel.listen('.arquivo.processado', handler);
+
+            cleanup = () => {
+                console.info('[arquivos] saindo do canal', `arquivos.${userId}`);
+                channel.stopListening('.arquivo.processado', handler);
+                echo.leave(`arquivos.${userId}`);
+            };
         };
 
-        console.info('[arquivos] ouvindo canal', `arquivos.${userId}`);
-        channel.listen('.arquivo.processado', handler);
+        void setup();
 
         return () => {
-            console.info('[arquivos] saindo do canal', `arquivos.${userId}`);
-            channel.stopListening('.arquivo.processado', handler);
-            echo.leave(`arquivos.${userId}`);
+            mounted = false;
+            if (cleanup) {
+                cleanup();
+            }
         };
     }, [fetchArquivos, props.auth?.user?.id, topicoId]);
 
