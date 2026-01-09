@@ -24,7 +24,7 @@ export type Revisao = {
     id: number;
     topico_id: number;
     data_revisao: string;
-    status: 'pendente' | 'concluida';
+    status: 'pendente' | 'em_andamento' | 'concluida';
     tipo?: string | null;
     origem?: string | null;
     topico?: Topico | null;
