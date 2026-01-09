@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { http, isApiError } from '@/lib/http';
 import type { Arquivo } from './useArquivosByTopico';
+import { notifications } from '@/components/ui/notification';
 
 type UploadPayload = {
     topicoId: number;
@@ -35,14 +36,18 @@ export function useUploadArquivo() {
 
             const arquivo = (response.data?.data ?? null) as Arquivo | null;
 
-            return {
-                queued: response.status === 202,
-                arquivo,
-            } satisfies UploadResult;
+            if (response.status === 202) {
+                notifications.info('Seu arquivo está na fila de processamento. Você será notificado quando estiver pronto.');
+                return {
+                    queued: response.status === 202,
+                    arquivo,
+                } satisfies UploadResult;
+            }
         } catch (err) {
             if (isApiError(err)) {
                 if (err.response?.data?.message) {
                     setError(err.response.data.message);
+                    notifications.danger(err.response.data.message);
                     return null;
                 }
             }
