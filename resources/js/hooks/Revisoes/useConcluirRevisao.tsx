@@ -11,6 +11,7 @@ export function useConcluirRevisao() {
         try {
             const response = await http.post(`/revisoes/${revisaoId}/concluir`);
             if (response.data?.success) {
+                notifications.success('Revisão concluída com sucesso.');
                 return true;
             }
 
