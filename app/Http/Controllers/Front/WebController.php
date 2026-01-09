@@ -62,14 +62,24 @@ class WebController extends Controller
     {
         $topico->load('disciplina:id,concurso_id');
 
-        return Inertia::render('Estudos/Topicos/review', [
+        $props = [
             'topico' => [
                 'id' => $topico->id,
                 'nome' => $topico->nome,
                 'disciplina_id' => $topico->disciplina_id,
                 'concurso_id' => $topico->disciplina->concurso_id ?? null,
             ],
-        ]);
+        ];
+
+        if (request()->routeIs('estudos.revisao.topico')) {
+            $props['breadcrumbs'] = [
+                ['title' => 'Revisao', 'href' => '/revisao'],
+                ['title' => $topico->nome, 'href' => "/revisao/{$topico->id}"],
+            ];
+            $props['backHref'] = '/revisao';
+        }
+
+        return Inertia::render('Estudos/Topicos/review', $props);
     }
 
     public function users()
