@@ -17,6 +17,7 @@ export function useUpdateRevisaoConfiguracao() {
             const response = await http.put('/revisao/configuracao', payload);
 
             if (response.data?.success) {
+                notifications.success('Configuração salva com sucesso.');
                 return true;
             }
 
