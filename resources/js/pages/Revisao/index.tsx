@@ -9,14 +9,7 @@ import { useGetRevisoesHoje } from '@/hooks/Revisoes/useGetRevisoesHoje';
 import { useConcluirRevisao } from '@/hooks/Revisoes/useConcluirRevisao';
 import { useIniciarRevisao } from '@/hooks/Revisoes/useIniciarRevisao';
 import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
+import ConfirmConcluirRevisaoDialog from '@/pages/Revisao/components/ConfirmConcluirRevisaoDialog';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Revisao', href: '/estudos/revisao' },
@@ -122,7 +115,7 @@ export default function RevisaoHoje() {
                                                 type="button"
                                                 onClick={() => router.visit(`/revisao/${topico?.id ?? ''}`)}
                                                 disabled={!topico?.id}
-                                                className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+                                                className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400 cursor-pointer"
                                             >
                                                 Continuar revisao
                                             </button>
@@ -130,7 +123,7 @@ export default function RevisaoHoje() {
                                                 type="button"
                                                 onClick={() => setConfirmRevisaoId(revisao.id)}
                                                 disabled={isSaving}
-                                                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+                                                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 cursor-pointer"
                                             >
                                                 {isSaving ? 'Concluindo...' : 'Concluir revisao'}
                                             </button>
@@ -140,7 +133,7 @@ export default function RevisaoHoje() {
                                             type="button"
                                             onClick={() => handleIniciar(revisao.id, topico?.id)}
                                             disabled={isStarting}
-                                            className="mt-4 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+                                            className="mt-4 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400 cursor-pointer"
                                         >
                                             {isStarting ? 'Iniciando...' : 'Começar revisao'}
                                         </button>
@@ -152,36 +145,19 @@ export default function RevisaoHoje() {
                 )}
             </div>
 
-            <Dialog open={confirmRevisaoId !== null} onOpenChange={(open) => !open && setConfirmRevisaoId(null)}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Concluir revisao?</DialogTitle>
-                        <DialogDescription>
-                            Ao concluir, esta revisao sera marcada como finalizada.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="gap-2">
-                        <Button type="button" variant="secondary" onClick={() => setConfirmRevisaoId(null)}>
-                            Cancelar
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="destructive"
-                            onClick={async () => {
-                                if (confirmRevisaoId === null) {
-                                    return;
-                                }
-                                const revisaoId = confirmRevisaoId;
-                                setConfirmRevisaoId(null);
-                                await handleConcluir(revisaoId);
-                            }}
-                            disabled={isSaving}
-                        >
-                            {isSaving ? 'Concluindo...' : 'Concluir revisao'}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <ConfirmConcluirRevisaoDialog
+                open={confirmRevisaoId !== null}
+                isSaving={isSaving}
+                onOpenChange={(open) => !open && setConfirmRevisaoId(null)}
+                onConfirm={async () => {
+                    if (confirmRevisaoId === null) {
+                        return;
+                    }
+                    const revisaoId = confirmRevisaoId;
+                    setConfirmRevisaoId(null);
+                    await handleConcluir(revisaoId);
+                }}
+            />
         </AppLayout>
     );
 }
