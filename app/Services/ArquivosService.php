@@ -2,13 +2,16 @@
 
 namespace App\Services;
 
+use App\Jobs\ProcessArquivoUpload;
 use App\Models\Arquivo;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ArquivosService
 {
-    public function listByTopicoForUser(int $topicoId, int $userId)
+    public function listByTopicoForUser(int $topicoId, int $userId): Collection
     {
         return Arquivo::query()
             ->where('topico_id', $topicoId)
@@ -38,10 +41,27 @@ class ArquivosService
         ]);
     }
 
+    public function queueStoreForUser(int $userId, int $topicoId, string $tipo, UploadedFile $file): void
+    {
+        $tempPath = $file->storeAs(
+            "tmp/arquivos/{$userId}",
+            Str::uuid().'.'.$file->getClientOriginalExtension(),
+            'local'
+        );
+
+        ProcessArquivoUpload::dispatch(
+            $userId,
+            $topicoId,
+            $tipo,
+            $tempPath,
+            $file->getClientOriginalName()
+        );
+    }
+
     public function deleteForUser(Arquivo $arquivo): void
     {
         $key = $arquivo->metadata['s3_key'] ?? null;
-        if (!$key) {
+        if (! $key) {
             $url = $arquivo->path;
             $key = $this->resolveKeyFromUrl($url);
         }
@@ -55,12 +75,12 @@ class ArquivosService
 
     private function resolveKeyFromUrl(?string $url): ?string
     {
-        if (!$url) {
+        if (! $url) {
             return null;
         }
 
         $path = parse_url($url, PHP_URL_PATH);
-        if (!$path) {
+        if (! $path) {
             return null;
         }
 
