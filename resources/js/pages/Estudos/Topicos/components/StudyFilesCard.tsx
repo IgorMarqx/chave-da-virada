@@ -17,6 +17,10 @@ import StudyFilesPreviewModal, { type AttachedFile } from './StudyFilesPreviewMo
 import StudyFilesDeleteModal from './StudyFilesDeleteModal';
 import { Spinner } from '@/components/ui/spinner';
 import { useIsMobile } from '@/hooks/use-mobile';
+import StudyFilesProcessedModal from './StudyFilesProcessedModal';
+import { echo } from '@/lib/echo';
+import { usePage } from '@inertiajs/react';
+import type { SharedData } from '@/types';
 
 type StudyFilesCardProps = {
     topicoId: number;
@@ -55,6 +59,7 @@ const getFileColor = (type: AttachedFile['type']) => {
 };
 
 export default function StudyFilesCard({ topicoId }: StudyFilesCardProps) {
+    const { props } = usePage<SharedData>();
     const isMobile = useIsMobile();
     const pdfInputRef = useRef<HTMLInputElement | null>(null);
     const docInputRef = useRef<HTMLInputElement | null>(null);
@@ -68,10 +73,41 @@ export default function StudyFilesCard({ topicoId }: StudyFilesCardProps) {
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<AttachedFile | null>(null);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [isProcessedOpen, setIsProcessedOpen] = useState(false);
 
     useEffect(() => {
         fetchArquivos(topicoId);
     }, [fetchArquivos, topicoId]);
+
+    useEffect(() => {
+        if (!echo || !props.auth?.user?.id) {
+            if (!echo) {
+                console.warn('[arquivos] echo nao inicializado');
+            }
+            return;
+        }
+
+        const userId = props.auth.user.id;
+        const channel = echo.private(`arquivos.${userId}`);
+        const handler = (event: { topico_id?: number | null }) => {
+            console.info('[arquivos] evento recebido', event);
+            if (event?.topico_id !== topicoId) {
+                return;
+            }
+
+            fetchArquivos(topicoId);
+            setIsProcessedOpen(true);
+        };
+
+        console.info('[arquivos] ouvindo canal', `arquivos.${userId}`);
+        channel.listen('.arquivo.processado', handler);
+
+        return () => {
+            console.info('[arquivos] saindo do canal', `arquivos.${userId}`);
+            channel.stopListening('.arquivo.processado', handler);
+            echo.leave(`arquivos.${userId}`);
+        };
+    }, [fetchArquivos, props.auth?.user?.id, topicoId]);
 
     const attachedFiles = useMemo(
         () =>
@@ -96,8 +132,8 @@ export default function StudyFilesCard({ topicoId }: StudyFilesCardProps) {
         }
 
         const uploaded = await uploadArquivo({ topicoId, tipo, file });
-        if (uploaded) {
-            addArquivo(uploaded);
+        if (uploaded?.arquivo) {
+            addArquivo(uploaded.arquivo);
         }
 
         event.target.value = '';
@@ -299,6 +335,10 @@ export default function StudyFilesCard({ topicoId }: StudyFilesCardProps) {
                 isDeleting={isDeleting}
                 onConfirm={handleRemoveFile}
                 onOpenChange={setIsDeleteOpen}
+            />
+            <StudyFilesProcessedModal
+                open={isProcessedOpen}
+                onOpenChange={setIsProcessedOpen}
             />
         </Card>
     );
