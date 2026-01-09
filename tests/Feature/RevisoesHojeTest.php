@@ -44,6 +44,22 @@ it('lists pending weekly reviews for today', function () {
     Revisao::factory()->create([
         'user_id' => $user->id,
         'topico_id' => $topico->id,
+        'data_revisao' => $now->startOfDay(),
+        'status' => 'em_andamento',
+        'tipo' => 'semanal',
+    ]);
+
+    Revisao::factory()->create([
+        'user_id' => $user->id,
+        'topico_id' => $topico->id,
+        'data_revisao' => $now->startOfDay(),
+        'status' => 'concluida',
+        'tipo' => 'semanal',
+    ]);
+
+    Revisao::factory()->create([
+        'user_id' => $user->id,
+        'topico_id' => $topico->id,
         'data_revisao' => $now->subDay()->startOfDay(),
         'status' => 'pendente',
         'tipo' => 'semanal',
@@ -56,5 +72,5 @@ it('lists pending weekly reviews for today', function () {
 
     $response->assertSuccessful()
         ->assertJsonPath('success', true)
-        ->assertJsonCount(1, 'data');
+        ->assertJsonCount(2, 'data');
 });
