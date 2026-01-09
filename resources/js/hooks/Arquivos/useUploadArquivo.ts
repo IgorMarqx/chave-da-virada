@@ -8,6 +8,11 @@ type UploadPayload = {
     file: File;
 };
 
+type UploadResult = {
+    queued: boolean;
+    arquivo: Arquivo | null;
+};
+
 export function useUploadArquivo() {
     const [isUploading, setIsUploading] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -28,7 +33,12 @@ export function useUploadArquivo() {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
 
-            return response.data?.data as Arquivo;
+            const arquivo = (response.data?.data ?? null) as Arquivo | null;
+
+            return {
+                queued: response.status === 202,
+                arquivo,
+            } satisfies UploadResult;
         } catch (err) {
             if (isApiError(err)) {
                 if (err.response?.data?.message) {
