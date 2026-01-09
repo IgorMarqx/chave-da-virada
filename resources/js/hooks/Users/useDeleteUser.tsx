@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { http, isApiError } from '@/lib/http';
+import { notifications } from '@/components/ui/notification';
 
 export function useDeleteUser() {
     const [isDeleting, setIsDeleting] = useState(false);
@@ -11,11 +12,13 @@ export function useDeleteUser() {
 
         try {
             await http.delete(`/users/${userId}`);
+            notifications.success('Usuário apagado com sucesso.');
             return true;
         } catch (err) {
             if (isApiError(err)) {
                 if (err.response?.data?.message) {
                     setError(err.response.data.message);
+                    notifications.danger(err.response.data.message);
                     return false;
                 }
             }
