@@ -16,6 +16,7 @@ Route::middleware('auth.redirect')->group(function () {
     Route::get('estudos', [WebController::class, 'estudos'])->name('estudos');
     Route::get('revisao', [WebController::class, 'revisao'])->name('estudos.revisao');
     Route::get('revisao/configuracao', [WebController::class, 'revisaoConfiguracao'])->name('estudos.revisao.configuracao');
+    Route::get('revisao/{topico}', [WebController::class, 'topicoRevisao'])->name('estudos.revisao.topico');
     Route::get('estudos/concursos/{concurso}', [WebController::class, 'concursoDisciplinas'])->name('estudos.concursos');
     Route::get('estudos/disciplinas/{disciplina}', [WebController::class, 'disciplinaTopicos'])->name('estudos.disciplinas');
     Route::get('estudos/topicos/{topico}', [WebController::class, 'topicoDetalhe'])->name('estudos.topicos');
