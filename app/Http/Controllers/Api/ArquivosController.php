@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Arquivo;
 use App\Services\ArquivosService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ArquivosController extends ApiController
@@ -12,7 +13,7 @@ class ArquivosController extends ApiController
         private readonly ArquivosService $arquivosService
     ) {}
 
-    public function listByTopico(int $topicoId)
+    public function listByTopico(int $topicoId): JsonResponse
     {
         $user = request()->user();
         $arquivos = $this->arquivosService->listByTopicoForUser($topicoId, $user->id);
@@ -20,7 +21,7 @@ class ArquivosController extends ApiController
         return $this->apiSuccess($arquivos, 'Arquivos fetched successfully');
     }
 
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         $user = $request->user();
         $data = $request->validate([
@@ -29,17 +30,17 @@ class ArquivosController extends ApiController
             'file' => 'required|file|max:10240',
         ]);
 
-        $arquivo = $this->arquivosService->storeForUser(
+        $this->arquivosService->queueStoreForUser(
             $user->id,
             (int) $data['topico_id'],
             $data['tipo'],
             $request->file('file')
         );
 
-        return $this->apiSuccess($arquivo, 'Arquivo stored successfully', 201);
+        return $this->apiSuccess(null, 'Arquivo em processamento', 202);
     }
 
-    public function destroy(int $arquivoId)
+    public function destroy(int $arquivoId): JsonResponse
     {
         $user = request()->user();
         $arquivo = Arquivo::query()
@@ -47,7 +48,7 @@ class ArquivosController extends ApiController
             ->where('user_id', $user->id)
             ->first();
 
-        if (!$arquivo) {
+        if (! $arquivo) {
             return $this->apiError('Arquivo not found', null, 404);
         }
 
