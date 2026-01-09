@@ -25,9 +25,11 @@ type TopicoRef = {
 
 type PageProps = {
     topico: TopicoRef;
+    breadcrumbs?: BreadcrumbItem[];
+    backHref?: string;
 };
 
-export default function TopicoRevisao({ topico }: PageProps) {
+export default function TopicoRevisao({ topico, breadcrumbs, backHref }: PageProps) {
     const { topico: topicoDetalhe, fetchTopico } = useGetTopico();
     const { estudos, isLoading: isLoadingEstudos, fetchEstudos } = useGetEstudosByTopico();
     const { anotacao, isLoading: isLoadingAnotacao, fetchAnotacao } = useGetAnotacaoByTopico();
@@ -45,12 +47,14 @@ export default function TopicoRevisao({ topico }: PageProps) {
         setNotesHtml(anotacao?.conteudo ?? '');
     }, [anotacao]);
 
-    const breadcrumbs: BreadcrumbItem[] = [
+    const defaultBreadcrumbs: BreadcrumbItem[] = [
         { title: 'Estudos', href: '/estudos' },
         { title: 'Disciplinas', href: `/estudos/concursos/${topico.concurso_id ?? ''}` },
         { title: topico.nome, href: `/estudos/topicos/${topico.id}` },
         { title: 'Revisao', href: `/estudos/topicos/${topico.id}/revisao` },
     ];
+    const resolvedBreadcrumbs = breadcrumbs ?? defaultBreadcrumbs;
+    const resolvedBackHref = backHref ?? `/estudos/topicos/${topico.id}`;
 
     const totalSeconds = useMemo(
         () => estudos.reduce((acc, estudo) => acc + estudo.tempo_segundos, 0),
@@ -60,7 +64,7 @@ export default function TopicoRevisao({ topico }: PageProps) {
     const notesCount = notesHtml.trim().length > 0 ? 1 : 0;
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={resolvedBreadcrumbs}>
             <Head title={`Revisao - ${topico.nome}`} />
             <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-emerald-50">
                 <div className="container mx-auto px-4 py-8 max-w-5xl">
@@ -68,8 +72,8 @@ export default function TopicoRevisao({ topico }: PageProps) {
                         <div className="flex items-center gap-4">
                             <Button
                                 variant="outline"
-                                onClick={() => router.visit(`/estudos/topicos/${topico.id}`)}
-                                className="bg-white/80"
+                                onClick={() => router.visit(resolvedBackHref)}
+                                className="bg-white/80 cursor-pointer"
                             >
                                 <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
                             </Button>
