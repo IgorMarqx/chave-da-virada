@@ -28,7 +28,7 @@ export default function CreateConcurso({
     onOpenChange,
     onSuccess
 }: CreateConcursoProps) {
-    const { isLoading, error, handleCreateConcurso } = useCreateConcurso();
+    const { isLoading, error, handleCreateConcurso, isSuccess } = useCreateConcurso();
     const { data, setData, reset } = useForm<CreateConcursoData>({
         nome: '',
         orgao: '',
@@ -37,12 +37,12 @@ export default function CreateConcurso({
     });
 
     useEffect(() => {
-        if (!error) {
+        if (isSuccess) {
             reset();
             onOpenChange(false);
             onSuccess()
         }
-    }, [error])
+    }, [isSuccess])
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
