@@ -10,6 +10,7 @@ export function useCreateConcurso() {
 
     const handleCreateConcurso = async (data: CreateConcursoData) => {
         setError(null);
+        setIsSuccess(false)
         if (!validateData(data)) {
             return;
         }
@@ -20,6 +21,7 @@ export function useCreateConcurso() {
 
             if (response.data.success) {
                 notifications.success('Concurso criado com sucesso!');
+                setIsSuccess(true);
             }
         } catch (err) {
             if (isApiError(err)) {
@@ -53,5 +55,5 @@ export function useCreateConcurso() {
         return true;
     }
 
-    return { isLoading, error, handleCreateConcurso };
+    return { isLoading, error, handleCreateConcurso, isSuccess };
 }
