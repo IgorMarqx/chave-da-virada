@@ -237,7 +237,7 @@ export default function StudyTimerCard({ topicoId, onSaved, onStatusChange }: St
                         Tempo de Estudo
                     </p>
                     <div
-                        className={`font-mono font-bold tracking-wider text-slate-900 transition-all duration-500 ${isActiveStudyMode ? 'text-5xl md:text-6xl' : 'text-6xl md:text-8xl'
+                        className={`font-mono font-bold tabular-nums leading-none tracking-tight text-slate-900 transition-all duration-500 whitespace-nowrap max-w-full overflow-hidden ${isActiveStudyMode ? 'text-[clamp(2rem,8.5vw,3.5rem)] sm:tracking-wider md:text-[clamp(2.75rem,6.5vw,4.25rem)]' : 'text-[clamp(2.5rem,10.5vw,4.25rem)] sm:tracking-wider md:text-[clamp(3.75rem,7.5vw,5.75rem)]'
                             }`}
                     >
                         {formattedElapsed}
