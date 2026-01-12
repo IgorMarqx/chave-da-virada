@@ -8,12 +8,11 @@ import { useGetTopico } from '@/hooks/Topicos/useGetTopico';
 import { useGetEstudosByTopico } from '@/hooks/Estudos/useGetEstudosByTopico';
 import StudyHeader from './components/StudyHeader';
 import StudyTimerCard from './components/StudyTimerCard';
-import StudyActionsCard from './components/StudyActionsCard';
-import StudyFilesCard from './components/StudyFilesCard';
-import StudyHistoryCard from './components/StudyHistoryCard';
 import StudyNotesCard from './components/StudyNotesCard';
+import StudyOverviewSection from './components/StudyOverviewSection';
 import { readLocalStorageJson, writeLocalStorageJson } from '@/lib/utils';
 import { useGetAnotacaoByTopico } from '@/hooks/Anotacoes/useGetAnotacaoByTopico';
+import StudyFilesCard from './components/StudyFilesCard';
 
 type TopicoRef = {
     id: number;
@@ -117,6 +116,14 @@ export default function TopicoDetalhe({ topico }: PageProps) {
                     ) : (
                         <div className="mt-2 flex flex-col">
                             <div className={isActiveStudyMode ? 'order-2' : 'order-1'}>
+                                <StudyNotesCard
+                                    notes={notes}
+                                    onNotesChange={setNotes}
+                                    topicoId={topico.id}
+                                    isActive={isActiveStudyMode}
+                                    savedAnotacoes={saveAnotacoes}
+                                />
+
                                 <div className={isActiveStudyMode ? 'grid gap-2 md:grid-cols-2' : ''}>
                                     <StudyTimerCard
                                         topicoId={topico.id}
@@ -130,33 +137,16 @@ export default function TopicoDetalhe({ topico }: PageProps) {
                                 </div>
                             </div>
 
-                            <div className={isActiveStudyMode ? 'order-1' : 'order-2'}>
-                                <StudyNotesCard
-                                    notes={notes}
-                                    onNotesChange={setNotes}
-                                    topicoId={topico.id}
-                                    isActive={isActiveStudyMode}
-                                    savedAnotacoes={saveAnotacoes}
-                                />
-                                <div className={`mt-2 grid gap-6 transition-all duration-500 ease-in-out ${isActiveStudyMode ? 'md:mx-auto md:max-w-md md:grid-cols-1' : 'md:grid-cols-3'}`}>
-                                    <div className={`transition-all duration-500 ease-in-out overflow-hidden ${isActiveStudyMode ? 'max-h-0 opacity-0 hidden' : 'max-h-[400px] opacity-100'}`}>
-                                        <StudyActionsCard
-                                            onReview={() => router.visit(`/estudos/topicos/${topico.id}/revisao`)}
-                                        />
-                                    </div>
 
-                                    {!isActiveStudyMode && <StudyFilesCard topicoId={topico.id} />}
-
-                                    <div className={`transition-all duration-500 ease-in-out overflow-hidden ${isActiveStudyMode ? 'max-h-0 opacity-0 hidden' : 'max-h-[400px] opacity-100'}`}>
-                                        <StudyHistoryCard
-                                            estudos={estudos}
-                                            isLoading={isLoadingEstudos}
-                                            error={errorEstudos}
-                                            notesHtml={notes}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
+                            <StudyOverviewSection
+                                isActiveStudyMode={isActiveStudyMode}
+                                topicoId={topico.id}
+                                estudos={estudos}
+                                isLoadingEstudos={isLoadingEstudos}
+                                errorEstudos={errorEstudos}
+                                notesHtml={notes}
+                                onReview={() => router.visit(`/estudos/topicos/${topico.id}/revisao`)}
+                            />
                         </div>
                     )}
                 </div>
