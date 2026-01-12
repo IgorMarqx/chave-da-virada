@@ -23,9 +23,11 @@ test('topico detalhe page can be rendered', function () {
     $response->assertOk();
     $response->assertInertia(fn (Assert $page) => $page
         ->component('Estudos/Topicos/index')
-        ->where('topico.id', $topico->id)
-        ->where('topico.nome', $topico->nome)
-        ->where('topico.disciplina_id', $topico->disciplina_id)
-        ->where('topico.concurso_id', $disciplina->concurso_id)
+        ->has('topico', fn (Assert $props) => $props
+            ->where('id', $topico->id)
+            ->where('nome', $topico->nome)
+            ->where('disciplina_id', $topico->disciplina_id)
+            ->where('concurso_id', $disciplina->concurso_id)
+        )
     );
 });
